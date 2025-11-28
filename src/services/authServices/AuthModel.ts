@@ -1,4 +1,8 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import bcrypt from "bcrypt";
+import jwt, { SignOptions, Secret, JwtPayload } from "jsonwebtoken";
+import { config } from "../../config/config";
+import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
 
 interface IAuth extends Document {
   fullname: string;
@@ -7,7 +11,7 @@ interface IAuth extends Document {
   refreshToken: string;
 }
 
-const AuthSchema: Schema<IAuth> = new Schema<IAuth>(
+const UserSchema: Schema<IAuth> = new Schema<IAuth>(
   {
     fullname: {
       type: String,
@@ -32,4 +36,53 @@ const AuthSchema: Schema<IAuth> = new Schema<IAuth>(
   }
 );
 
-export const Auth: Model<IAuth> = mongoose.model<IAuth>("User", AuthSchema);
+//do some stuff before saving password. it will convert plain password in random salt using bcrypt library . this function used mongoose inBuilt middleware hook 'pre' which is genrally used to do some stuff in data before saving in a database
+
+UserSchema.pre<IAuth>("save", async function (this: IAuth): Promise<void> {
+  try {
+    if (!this.isModified("password")) {
+      return;
+    }
+    this.password = await bcrypt.hash(this.password, 15);
+  } catch (error) {
+    console.log("error in password field schema", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ApiErrorHandling(500, msg, [msg]);
+  }
+});
+
+//this inbuilt function is used to create a custom own method, which further used in to check password and all
+
+UserSchema.methods.isPasswordCorrect = async function (
+  password: string
+): Promise<boolean> {
+  return await bcrypt.compare(password, this.password);
+};
+
+// generate access and refresh token via mongoose inbuilt method generator, use this keyword to access
+UserSchema.methods.genrateAccessToken = function (): string {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      fullName: this.fullName,
+    } as JwtPayload,
+    config.ACCESS_TOKEN_SECRET as Secret, //why we use as Secret? because we are using the secret key as a string and we need to convert it to a Secret type because jwt.sign function expects a Secret type but we are passing a config object which is a string
+    {
+      expiresIn: config.ACCESS_TOKEN_EXPIRY,
+    } as SignOptions //why we use as SignOptions? because we are using the expiry time as a string and we need to convert it to a SignOptions type because jwt.sign function expects a SignOptions type but we are passing a config object which is a type of string and we need to convert it to a SignOptions type
+  ) as string;
+};
+
+UserSchema.methods.genrateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    config.REFRESH_TOKEN_SECRET as Secret,
+    {
+      expiresIn: config.REFRESH_TOKEN_EXPIRY,
+    } as SignOptions
+  );
+};
+export const Auth: Model<IAuth> = mongoose.model<IAuth>("User", UserSchema);
