@@ -1,9 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-
-import jwt, { SignOptions, Secret, JwtPayload } from "jsonwebtoken";
-import { config } from "../../config/config";
 import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
 import { ComparePassword, HashPassword } from "../../utils/Bcrypt";
+import { AccessTokenJwtSign, RefreshTokenJwtSign } from "../../utils/Jwt";
 
 interface IAuth extends Document {
   fullname: string;
@@ -41,9 +39,7 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
 
 UserSchema.pre<IAuth>("save", async function (): Promise<void> {
   try {
-    if (!this.isModified("password")) {
-      return;
-    }
+    if (!this.isModified("password")) return;
     this.password = await HashPassword(this.password, 10);
   } catch (error) {
     console.log("error in password field schema", error);
@@ -59,29 +55,17 @@ UserSchema.methods.isPasswordCorrect = async function (password: string) {
 };
 
 // generate access and refresh token via mongoose inbuilt method generator, use this keyword to access
-UserSchema.methods.genrateAccessToken = function (): string {
-  return jwt.sign(
-    {
-      _id: this._id,
-      email: this.email,
-      fullName: this.fullName,
-    } as JwtPayload,
-    config.ACCESS_TOKEN_SECRET as Secret, //why we use as Secret? because we are using the secret key as a string and we need to convert it to a Secret type because jwt.sign function expects a Secret type but we are passing a config object which is a string
-    {
-      expiresIn: config.ACCESS_TOKEN_EXPIRY,
-    } as SignOptions //why we use as SignOptions? because we are using the expiry time as a string and we need to convert it to a SignOptions type because jwt.sign function expects a SignOptions type but we are passing a config object which is a type of string and we need to convert it to a SignOptions type
-  ) as string;
+UserSchema.methods.GenrateAccessToken = function () {
+  return AccessTokenJwtSign({
+    _id: this._id,
+    email: this.email,
+    fullname: this.fullname,
+  });
 };
 
 UserSchema.methods.genrateRefreshToken = function () {
-  return jwt.sign(
-    {
-      _id: this._id,
-    },
-    config.REFRESH_TOKEN_SECRET as Secret,
-    {
-      expiresIn: config.REFRESH_TOKEN_EXPIRY,
-    } as SignOptions
-  );
+  return RefreshTokenJwtSign({
+    _id: this._id,
+  });
 };
 export const Auth: Model<IAuth> = mongoose.model<IAuth>("User", UserSchema);
