@@ -1,8 +1,9 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-import bcrypt from "bcrypt";
+
 import jwt, { SignOptions, Secret, JwtPayload } from "jsonwebtoken";
 import { config } from "../../config/config";
 import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
+import { ComparePassword, HashPassword } from "../../utils/Bcrypt";
 
 interface IAuth extends Document {
   fullname: string;
@@ -38,12 +39,12 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
 
 //do some stuff before saving password. it will convert plain password in random salt using bcrypt library . this function used mongoose inBuilt middleware hook 'pre' which is genrally used to do some stuff in data before saving in a database
 
-UserSchema.pre<IAuth>("save", async function (this: IAuth): Promise<void> {
+UserSchema.pre<IAuth>("save", async function (): Promise<void> {
   try {
     if (!this.isModified("password")) {
       return;
     }
-    this.password = await bcrypt.hash(this.password, 15);
+    this.password = await HashPassword(this.password, 10);
   } catch (error) {
     console.log("error in password field schema", error);
     const msg = error instanceof Error ? error.message : String(error);
@@ -53,10 +54,8 @@ UserSchema.pre<IAuth>("save", async function (this: IAuth): Promise<void> {
 
 //this inbuilt function is used to create a custom own method, which further used in to check password and all
 
-UserSchema.methods.isPasswordCorrect = async function (
-  password: string
-): Promise<boolean> {
-  return await bcrypt.compare(password, this.password);
+UserSchema.methods.isPasswordCorrect = async function (password: string) {
+  return await ComparePassword(password, this.password);
 };
 
 // generate access and refresh token via mongoose inbuilt method generator, use this keyword to access
