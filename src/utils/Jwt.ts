@@ -1,7 +1,7 @@
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import jwt, { Secret, SignOptions, JwtPayload } from "jsonwebtoken";
 import { config } from "../config/config";
 
-interface payload {
+interface payload extends JwtPayload {
   _id: string;
   email?: string;
   fullname?: string;
@@ -31,3 +31,6 @@ export const RefreshTokenJwtSign = (UserPayLoad: payload) =>
       expiresIn: config.REFRESH_TOKEN_EXPIRY,
     } as expiresIN //why we use as SignOptions? because we are using the expiry time as a string and we need to convert it to a SignOptions type because jwt.sign function expects a SignOptions type but we are passing a config object which is a type of string and we need to convert it to a SignOptions type
   );
+
+export const JwtVerify = (Token: string): payload =>
+  jwt.verify(Token, config.ACCESS_TOKEN_SECRET as Secret) as payload;

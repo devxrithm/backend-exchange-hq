@@ -11,7 +11,7 @@ interface ICodes {
   INTERNAL_SERVER_ERROR: number;
 }
 
-export const codes: ICodes = {
+export const HttpCodes: ICodes = {
   OK: 200,
   CREATED: 201,
   BAD_REQUEST: 400,

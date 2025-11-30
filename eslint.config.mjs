@@ -11,7 +11,12 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.node },
     rules: {
-      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-empty-object-type": [
+        "error",
+        {
+          allowObjectTypes: "always",
+        },
+      ],
     },
   },
   eslint.configs.recommended,
