@@ -3,14 +3,18 @@ import { ApiErrorHandling } from "../utils/ApiErrorHandling";
 import { NextFunction, Request, Response } from "express";
 import { JwtVerify } from "../utils/Jwt";
 import { HttpCodes } from "../lib/HttpCodes";
+import { ApiResponse } from "../utils/ApiResponse";
 
-interface user {
-  fullname: string;
-  email: string;
+interface AuthRequest extends Request {
+  user?: {
+    fullname: string;
+    email: string;
+  };
 }
+
 const verifyJWT = async (
-  req: Request<{}, {}, user>,
-  _res: Response,
+  req: AuthRequest,
+  res: Response,
   next: NextFunction
 ) => {
   try {
@@ -30,10 +34,23 @@ const verifyJWT = async (
     if (!user) {
       throw new ApiErrorHandling(401, "Invalid Access Token");
     }
-    req.user = user;
+    req.user = Object(user);
     next();
   } catch (error) {
-    throw new ApiErrorHandling(401, "Invalid access token");
+    if (error instanceof ApiErrorHandling) {
+      res
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
+    }
+    res
+      .status(HttpCodes.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpCodes.INTERNAL_SERVER_ERROR,
+          null,
+          "Internal Server Error"
+        )
+      );
   }
 };
 
