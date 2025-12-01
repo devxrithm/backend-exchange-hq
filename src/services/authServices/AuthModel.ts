@@ -2,17 +2,21 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
 import { ComparePassword, HashPassword } from "../../utils/Bcrypt";
 import { AccessTokenJwtSign, RefreshTokenJwtSign } from "../../utils/Jwt";
+import { HttpCodes } from "../../lib/HttpCodes";
 
 interface IAuth extends Document {
-  fullname: string;
+  fullName: string;
   email: string;
   password: string;
   refreshToken: string;
+  GenrateAccessToken(): string;
+  GenrateRefreshToken(): string;
+  IsPasswordCorrect(password: string): Promise<boolean>;
 }
 
 const UserSchema: Schema<IAuth> = new Schema<IAuth>(
   {
-    fullname: {
+    fullName: {
       type: String,
       require: true,
     },
@@ -37,20 +41,24 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
 
 //do some stuff before saving password. it will convert plain password in random salt using bcrypt library . this function used mongoose inBuilt middleware hook 'pre' which is genrally used to do some stuff in data before saving in a database
 
-UserSchema.pre<IAuth>("save", async function (): Promise<void> {
+UserSchema.pre<IAuth>("save", async function () {
   try {
     if (!this.isModified("password")) return;
     this.password = await HashPassword(this.password, 10);
   } catch (error) {
-    console.log("error in password field schema", error);
-    const msg = error instanceof Error ? error.message : String(error);
-    throw new ApiErrorHandling(500, msg, [msg]);
+    const msg =
+      error instanceof ApiErrorHandling ? error.message : String(error);
+    throw new ApiErrorHandling(
+      HttpCodes.INTERNAL_SERVER_ERROR,
+      "Internal Server Error",
+      [msg]
+    );
   }
 });
 
 //this inbuilt function is used to create a custom own method, which further used in to check password and all
 
-UserSchema.methods.isPasswordCorrect = async function (password: string) {
+UserSchema.methods.IsPasswordCorrect = async function (password: string) {
   return await ComparePassword(password, this.password);
 };
 
@@ -63,7 +71,7 @@ UserSchema.methods.GenrateAccessToken = function () {
   });
 };
 
-UserSchema.methods.genrateRefreshToken = function () {
+UserSchema.methods.GenrateRefreshToken = function () {
   return RefreshTokenJwtSign({
     _id: this._id,
   });
