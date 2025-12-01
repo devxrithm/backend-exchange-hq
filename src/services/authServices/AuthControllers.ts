@@ -6,10 +6,9 @@ import { Request, Response, CookieOptions } from "express";
 import { AuthRequest } from "../../middleware/JwtVerify";
 import { JwtVerifyRefreshToken } from "../../utils/Jwt";
 
-class AuthControllers {
-  // constructor() { }
 
-  getAccessAndRefreshToken = async (userId: string) => {
+
+  const getAccessAndRefreshToken = async (userId: string) => {
     try {
       const user = await Auth.findById(userId);
       // console.log(user)
@@ -34,7 +33,7 @@ class AuthControllers {
     }
   };
 
-  userSignup = async (
+  const userSignup = async (
     req: Request<
       {},
       {},
@@ -115,7 +114,7 @@ class AuthControllers {
     }
   };
 
-  userLogin = async (
+  const userLogin = async (
     req: Request<{}, {}, { email: string; password: string }>,
     res: Response
   ) => {
@@ -157,7 +156,7 @@ class AuthControllers {
         );
       }
 
-      const { accessToken, refreshToken } = await this.getAccessAndRefreshToken(
+      const { accessToken, refreshToken } = await getAccessAndRefreshToken(
         String(user._id)
       );
       // const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
@@ -210,9 +209,9 @@ class AuthControllers {
     }
   };
 
-  userLogout = async (req: AuthRequest, res: Response) => {
+  const userLogout = async (req: AuthRequest, res: Response) => {
     await Auth.findByIdAndUpdate(
-      req.user._id,
+      req.user?._id,
       {
         $unset: {
           refreshToken: 1, // this removes the field from document
@@ -243,7 +242,7 @@ class AuthControllers {
   //why we generate new both access and refresh token again
   //to maintain the security for webapp we generate both access and refresh token,
   //why we generate the refresh token again if its limit is 10d because with refresh token anyone can re-generate access token
-  genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
+  const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
     //get refresh token from browser local storage
     //check if it valid or not
     //verify the token with jwt
@@ -276,7 +275,7 @@ class AuthControllers {
         );
       }
 
-      const { accessToken, refreshToken } = await this.getAccessAndRefreshToken(
+      const { accessToken, refreshToken } = await getAccessAndRefreshToken(
         user._id
       );
       //why we use this keyword because i am using the constructor to maintain the code readbility so, to access the method define in constructor with this keyword
@@ -322,6 +321,6 @@ class AuthControllers {
         );
     }
   };
-}
 
-export { AuthControllers };
+
+export {userLogin,userSignup,userLogout,genrateNewAccessAndRefreshToken};

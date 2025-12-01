@@ -1,19 +1,19 @@
 import { Auth } from "../services/authServices/AuthModel";
 import { ApiErrorHandling } from "../utils/ApiErrorHandling";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import { JwtVerifyAccessToken } from "../utils/Jwt";
 import { HttpCodes } from "../lib/HttpCodes";
 import { ApiResponse } from "../utils/ApiResponse";
 
 export interface AuthRequest extends Request {
-  user: {
+  user?: {
     _id: string;
     fullname: string;
     email: string;
   };
 }
 
-const verifyJWT = async (
+const verifyJWT: RequestHandler = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
