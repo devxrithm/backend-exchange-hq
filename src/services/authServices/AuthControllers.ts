@@ -6,321 +6,316 @@ import { Request, Response, CookieOptions } from "express";
 import { AuthRequest } from "../../middleware/JwtVerify";
 import { JwtVerifyRefreshToken } from "../../utils/Jwt";
 
-
-
-  const getAccessAndRefreshToken = async (userId: string) => {
-    try {
-      const user = await Auth.findById(userId);
-      // console.log(user)
-      if (!user) {
-        throw new Error("User not found");
-      }
-      const accessToken = user.GenrateAccessToken();
-      const refreshToken = user.GenrateRefreshToken();
-
-      user.refreshToken = refreshToken;
-      await user.save();
-
-      return { accessToken, refreshToken };
-    } catch (error) {
-      if (error instanceof ApiErrorHandling) {
-        throw new ApiErrorHandling(error.statusCode, error.message);
-      }
-      throw new ApiErrorHandling(
-        HttpCodes.INTERNAL_SERVER_ERROR,
-        "Internal Server Error"
-      );
+const getAccessAndRefreshToken = async (userId: string) => {
+  try {
+    const user = await Auth.findById(userId);
+    // console.log(user)
+    if (!user) {
+      throw new Error("User not found");
     }
-  };
+    const accessToken = user.GenrateAccessToken();
+    const refreshToken = user.GenrateRefreshToken();
 
-  const userSignup = async (
-    req: Request<
-      {},
-      {},
-      { fullName: string; userName: string; password: string; email: string }
-    >,
-    res: Response
-  ) => {
-    try {
-      //checkpoints
-      /* 
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    if (error instanceof ApiErrorHandling) {
+      throw new ApiErrorHandling(error.statusCode, error.message);
+    }
+    throw new ApiErrorHandling(
+      HttpCodes.INTERNAL_SERVER_ERROR,
+      "Internal Server Error"
+    );
+  }
+};
+
+const userSignup = async (
+  req: Request<
+    {},
+    {},
+    { fullName: string; userName: string; password: string; email: string }
+  >,
+  res: Response
+) => {
+  try {
+    //checkpoints
+    /* 
             access user details like username, email,etc...
             genrate an error if user misktakenly miss any one of the fields
             check if user already register or not if register kindly login
             create a new user
             again check if user registered or not 
             */
-      const { fullName, userName, password, email } = req.body;
-      // console.log(`email : ${email} && password : ${password} `)
+    const { fullName, password, email } = req.body;
+    // console.log(`email : ${email} && password : ${password} `)
 
-      //check validation if an user is enter a value in field or not
-      const data = [email, password, userName, fullName];
-      const dataValidation = data.some((currEle) => currEle?.trim() === "");
+    //check validation if an user is enter a value in field or not
+    const data = [email, password, fullName];
+    const dataValidation = data.some((currEle) => currEle?.trim() === "");
 
-      if (dataValidation) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "All fields are required"
-        );
-      }
-
-      //check for existing user from DB
-      const userExist = await Auth.findOne({ email, userName });
-      if (userExist) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "User with email or username already exists"
-        );
-      }
-
-      //create a new user
-      const user = await Auth.create({
-        fullName,
-        email,
-        password,
-      });
-
-      const userCreated = await Auth.findById(user._id).select(
-        "-password -refreshToken"
+    if (dataValidation) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "All fields are required"
       );
-
-      if (!userCreated) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "Something went wrong while registering the user"
-        );
-      }
-
-      res
-        .status(201)
-        .json(
-          new ApiResponse(200, userCreated, "User registered Successfully")
-        );
-    } catch (error) {
-      if (error instanceof ApiErrorHandling) {
-        res
-          .status(error.statusCode)
-          .json(new ApiResponse(error.statusCode, null, error.message));
-      }
-      res
-        .status(HttpCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            HttpCodes.INTERNAL_SERVER_ERROR,
-            null,
-            "Internal Server Error"
-          )
-        );
     }
-  };
 
-  const userLogin = async (
-    req: Request<{}, {}, { email: string; password: string }>,
-    res: Response
-  ) => {
-    try {
-      /*
+    //check for existing user from DB
+    const userExist = await Auth.findOne({ email, fullName });
+    if (userExist) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "User with email or username already exists"
+      );
+    }
+
+    //create a new user
+    const user = await Auth.create({
+      fullName,
+      email,
+      password,
+    });
+
+    const userCreated = await Auth.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    if (!userCreated) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "Something went wrong while registering the user"
+      );
+    }
+
+    res
+      .status(201)
+      .json(new ApiResponse(200, userCreated, "User registered Successfully"));
+  } catch (error) {
+    if (error instanceof ApiErrorHandling) {
+      res
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
+    }
+    res
+      .status(HttpCodes.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpCodes.INTERNAL_SERVER_ERROR,
+          null,
+          "Internal Server Error"
+        )
+      );
+  }
+};
+
+const userLogin = async (
+  req: Request<{}, {}, { email: string; password: string }>,
+  res: Response
+) => {
+  try {
+    /*
        access login credential from user like email and password
        check if user register or not
        check the details with db
        return the token
        */
 
-      //access login credential
-      const { email, password } = req.body;
+    //access login credential
+    const { email, password } = req.body;
 
-      if (!email || !password) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "user credential required"
-        );
-      }
-
-      //check if user register or not
-      const user = await Auth.findOne({ email });
-      if (!user) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "Invalid user credentials"
-        );
-      }
-      // console.log(user._id)
-      // let userID = await User.findById(email);
-      // Compare passwords (assuming password is stored as plain text, but in production use bcrypt to secure more with salt)
-      const checkUserPasssowrd = await user.IsPasswordCorrect(password);
-
-      if (!checkUserPasssowrd) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "Invalid user credentials"
-        );
-      }
-
-      const { accessToken, refreshToken } = await getAccessAndRefreshToken(
-        String(user._id)
+    if (!email || !password) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "user credential required"
       );
-      // const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
-      //loggedInUser is optionally because we can also extract user details directly from stored jwt tokens
-      // console.log(accessToken, refreshToken)
-
-      // If you want to return a token, generate it here
-      res
-        .status(200)
-        .cookie("accessToken", accessToken, {
-          // httpOnly: true,
-          // secure: true, // required for HTTPS
-          // sameSite: "none", // allow cross-site
-          path: "/",
-          // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
-          maxAge: 84600 * 1000,
-        })
-        .cookie("refreshToken", refreshToken, {
-          // httpOnly: true,
-          // secure: true, // required for HTTPS
-          // sameSite: "none", // allow cross-site
-          // path: "/",
-          // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
-          maxAge: 84600 * 1000,
-        })
-        .json(
-          new ApiResponse(
-            200,
-            { accessToken, refreshToken },
-            "user login successful"
-          )
-        );
-    } catch (error) {
-      //we can check if error is instance of ApiError
-      //we use oops concept to handle the error
-      if (error instanceof ApiErrorHandling) {
-        res
-          .status(error.statusCode)
-          .json(new ApiResponse(error.statusCode, null, error.message));
-      }
-      res
-        .status(HttpCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            HttpCodes.INTERNAL_SERVER_ERROR,
-            null,
-            "Internal Server Error"
-          )
-        );
     }
+
+    //check if user register or not
+    const user = await Auth.findOne({ email });
+    if (!user) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "Invalid user credentials"
+      );
+    }
+    // console.log(user._id)
+    // let userID = await User.findById(email);
+    // Compare passwords (assuming password is stored as plain text, but in production use bcrypt to secure more with salt)
+    const checkUserPasssowrd = await user.IsPasswordCorrect(password);
+
+    if (!checkUserPasssowrd) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "Invalid user credentials"
+      );
+    }
+
+    const { accessToken, refreshToken } = await getAccessAndRefreshToken(
+      String(user._id)
+    );
+    // const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    //loggedInUser is optionally because we can also extract user details directly from stored jwt tokens
+    // console.log(accessToken, refreshToken)
+
+    // If you want to return a token, generate it here
+    res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+        // httpOnly: true,
+        // secure: true, // required for HTTPS
+        // sameSite: "none", // allow cross-site
+        path: "/",
+        // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+        maxAge: 84600 * 1000,
+      })
+      .cookie("refreshToken", refreshToken, {
+        // httpOnly: true,
+        // secure: true, // required for HTTPS
+        // sameSite: "none", // allow cross-site
+        // path: "/",
+        // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+        maxAge: 84600 * 1000,
+      })
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "user login successful"
+        )
+      );
+  } catch (error) {
+    //we can check if error is instance of ApiError
+    //we use oops concept to handle the error
+    if (error instanceof ApiErrorHandling) {
+      res
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
+    }
+    res
+      .status(HttpCodes.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpCodes.INTERNAL_SERVER_ERROR,
+          null,
+          "Internal Server Error"
+        )
+      );
+  }
+};
+
+const userLogout = async (req: AuthRequest, res: Response) => {
+  await Auth.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $unset: {
+        refreshToken: 1, // this removes the field from document
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  interface IOptions {
+    httpOnly: boolean;
+    secure: boolean;
+  }
+
+  const options: IOptions = {
+    httpOnly: true,
+    secure: true,
   };
 
-  const userLogout = async (req: AuthRequest, res: Response) => {
-    await Auth.findByIdAndUpdate(
-      req.user?._id,
-      {
-        $unset: {
-          refreshToken: 1, // this removes the field from document
-        },
-      },
-      {
-        new: true,
-      }
-    );
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged Out"));
+};
 
-    interface IOptions {
-      httpOnly: boolean;
-      secure: boolean;
+//why we generate new both access and refresh token again
+//to maintain the security for webapp we generate both access and refresh token,
+//why we generate the refresh token again if its limit is 10d because with refresh token anyone can re-generate access token
+const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
+  //get refresh token from browser local storage
+  //check if it valid or not
+  //verify the token with jwt
+  //check if stored token in DB and browser stored token are same or not
+  //now generate new access token and refresh token to maintain the security for web app
+  try {
+    const localToken = req.cookies.refreshToken;
+    if (!localToken) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "invaild token kindly check"
+      );
     }
 
-    const options: IOptions = {
+    const user = JwtVerifyRefreshToken(localToken);
+    if (!user) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "invaild decoded token"
+      );
+    }
+
+    const storedDBToken = await Auth.findById(user?._id);
+    // console.log(storedDBToken.refreshToken)
+
+    if (storedDBToken?.refreshToken !== localToken) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "something wrong with token"
+      );
+    }
+
+    const { accessToken, refreshToken } = await getAccessAndRefreshToken(
+      user._id
+    );
+    //why we use this keyword because i am using the constructor to maintain the code readbility so, to access the method define in constructor with this keyword
+
+    const cookieOptions: CookieOptions = {
       httpOnly: true,
       secure: true,
+      sameSite: "none",
+      path: "/",
     };
 
-    return res
+    res
       .status(200)
-      .clearCookie("accessToken", options)
-      .clearCookie("refreshToken", options)
-      .json(new ApiResponse(200, {}, "User logged Out"));
-  };
-
-  //why we generate new both access and refresh token again
-  //to maintain the security for webapp we generate both access and refresh token,
-  //why we generate the refresh token again if its limit is 10d because with refresh token anyone can re-generate access token
-  const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
-    //get refresh token from browser local storage
-    //check if it valid or not
-    //verify the token with jwt
-    //check if stored token in DB and browser stored token are same or not
-    //now generate new access token and refresh token to maintain the security for web app
-    try {
-      const localToken = req.cookies.refreshToken;
-      if (!localToken) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "invaild token kindly check"
-        );
-      }
-
-      const user = JwtVerifyRefreshToken(localToken);
-      if (!user) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "invaild decoded token"
-        );
-      }
-
-      const storedDBToken = await Auth.findById(user?._id);
-      // console.log(storedDBToken.refreshToken)
-
-      if (storedDBToken?.refreshToken !== localToken) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "something wrong with token"
-        );
-      }
-
-      const { accessToken, refreshToken } = await getAccessAndRefreshToken(
-        user._id
+      .cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: 60 * 60 * 24 * 1000,
+      })
+      .cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 60 * 60 * 24 * 10 * 1000,
+      })
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "succesfull refresh tokens"
+        )
       );
-      //why we use this keyword because i am using the constructor to maintain the code readbility so, to access the method define in constructor with this keyword
-
-      const cookieOptions: CookieOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        path: "/",
-      };
-
+  } catch (error) {
+    if (error instanceof ApiErrorHandling) {
       res
-        .status(200)
-        .cookie("accessToken", accessToken, {
-          ...cookieOptions,
-          maxAge: 60 * 60 * 24 * 1000,
-        })
-        .cookie("refreshToken", refreshToken, {
-          ...cookieOptions,
-          maxAge: 60 * 60 * 24 * 10 * 1000,
-        })
-        .json(
-          new ApiResponse(
-            200,
-            { accessToken, refreshToken },
-            "succesfull refresh tokens"
-          )
-        );
-    } catch (error) {
-      if (error instanceof ApiErrorHandling) {
-        res
-          .status(error.statusCode)
-          .json(new ApiResponse(error.statusCode, null, error.message));
-      }
-      res
-        .status(HttpCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            HttpCodes.INTERNAL_SERVER_ERROR,
-            null,
-            "Internal Server Error"
-          )
-        );
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
     }
-  };
+    res
+      .status(HttpCodes.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpCodes.INTERNAL_SERVER_ERROR,
+          null,
+          "Internal Server Error"
+        )
+      );
+  }
+};
 
-
-export {userLogin,userSignup,userLogout,genrateNewAccessAndRefreshToken};
+export { userLogin, userSignup, userLogout, genrateNewAccessAndRefreshToken };
