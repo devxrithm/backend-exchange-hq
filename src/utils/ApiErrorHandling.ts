@@ -2,12 +2,12 @@ export class ApiErrorHandling extends Error {
   statusCode: number;
   data: null;
   success: boolean;
-  errors: string[];
+  errors: unknown[];
 
   constructor(
     statusCode: number,
     message = "Something went wrong in the server",
-    errors: string[] = []
+    errors = []
   ) {
     super(message);
     this.statusCode = statusCode;

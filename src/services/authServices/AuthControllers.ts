@@ -5,31 +5,7 @@ import { HttpCodes } from "../../lib/HttpCodes";
 import { Request, Response, CookieOptions } from "express";
 import { AuthRequest } from "../../middleware/JwtVerify";
 import { JwtVerifyRefreshToken } from "../../utils/Jwt";
-
-const getAccessAndRefreshToken = async (userId: string) => {
-  try {
-    const user = await Auth.findById(userId);
-    // console.log(user)
-    if (!user) {
-      throw new Error("User not found");
-    }
-    const accessToken = user.GenrateAccessToken();
-    const refreshToken = user.GenrateRefreshToken();
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    if (error instanceof ApiErrorHandling) {
-      throw new ApiErrorHandling(error.statusCode, error.message);
-    }
-    throw new ApiErrorHandling(
-      HttpCodes.INTERNAL_SERVER_ERROR,
-      "Internal Server Error"
-    );
-  }
-};
+import { getAccessAndRefreshToken } from "../../lib/GetAccessAndRefreshToken";
 
 const userSignup = async (
   req: Request<
@@ -52,10 +28,7 @@ const userSignup = async (
     // console.log(`email : ${email} && password : ${password} `)
 
     //check validation if an user is enter a value in field or not
-    const data = [email, password, fullName];
-    const dataValidation = data.some((currEle) => currEle?.trim() === "");
-
-    if (dataValidation) {
+    if (!email?.trim() || !password?.trim() || !fullName?.trim()) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
         "All fields are required"
@@ -63,7 +36,7 @@ const userSignup = async (
     }
 
     //check for existing user from DB
-    const userExist = await Auth.findOne({ email, fullName });
+    const userExist = await Auth.findOne({ email });
     if (userExist) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
@@ -89,22 +62,23 @@ const userSignup = async (
       );
     }
 
-    res
+    return res
       .status(201)
       .json(new ApiResponse(200, userCreated, "User registered Successfully"));
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
-      res
+      return res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
     }
-    res
+    console.log(error);
+    return res
       .status(HttpCodes.INTERNAL_SERVER_ERROR)
       .json(
         new ApiResponse(
           HttpCodes.INTERNAL_SERVER_ERROR,
           null,
-          "Internal Server Error"
+          "Internal Server Error error"
         )
       );
   }
@@ -192,16 +166,17 @@ const userLogin = async (
       res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
+    } else {
+      res
+        .status(HttpCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            HttpCodes.INTERNAL_SERVER_ERROR,
+            null,
+            "Internal Server Error"
+          )
+        );
     }
-    res
-      .status(HttpCodes.INTERNAL_SERVER_ERROR)
-      .json(
-        new ApiResponse(
-          HttpCodes.INTERNAL_SERVER_ERROR,
-          null,
-          "Internal Server Error"
-        )
-      );
   }
 };
 
@@ -305,16 +280,17 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
       res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
+    } else {
+      res
+        .status(HttpCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            HttpCodes.INTERNAL_SERVER_ERROR,
+            null,
+            "Internal Server Error"
+          )
+        );
     }
-    res
-      .status(HttpCodes.INTERNAL_SERVER_ERROR)
-      .json(
-        new ApiResponse(
-          HttpCodes.INTERNAL_SERVER_ERROR,
-          null,
-          "Internal Server Error"
-        )
-      );
   }
 };
 

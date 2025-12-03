@@ -18,17 +18,17 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
   {
     fullName: {
       type: String,
-      require: true,
+      required: true,
     },
     email: {
       type: String,
-      require: true,
+      required: true,
       unique: true,
       lowercase: true,
     },
     password: {
       type: String,
-      require: true,
+      required: true,
     },
     refreshToken: {
       type: String,
@@ -67,7 +67,7 @@ UserSchema.methods.GenrateAccessToken = function () {
   return AccessTokenJwtSign({
     _id: this._id,
     email: this.email,
-    fullname: this.fullname,
+    fullName: this.fullName,
   });
 };
 
