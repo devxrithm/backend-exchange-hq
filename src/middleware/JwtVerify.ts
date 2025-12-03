@@ -25,7 +25,6 @@ const verifyJWT: RequestHandler = async (
     }
     const decodedToken = JwtVerifyAccessToken(token);
 
-    console.log(decodedToken);
     if (!decodedToken) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");
     }

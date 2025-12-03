@@ -236,7 +236,7 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
       );
     }
 
-    const storedDBToken = await Auth.findById(user?._id);
+    const storedDBToken = await Auth.findById(user?.UserPayLoad._id);
     // console.log(storedDBToken.refreshToken)
 
     if (storedDBToken?.refreshToken !== localToken) {
@@ -247,7 +247,7 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
     }
 
     const { accessToken, refreshToken } = await getAccessAndRefreshToken(
-      user._id
+      user.UserPayLoad._id
     );
     //why we use this keyword because i am using the constructor to maintain the code readbility so, to access the method define in constructor with this keyword
 
@@ -258,7 +258,7 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
       path: "/",
     };
 
-    res
+    return res
       .status(200)
       .cookie("accessToken", accessToken, {
         ...cookieOptions,
@@ -276,12 +276,13 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
         )
       );
   } catch (error) {
+    console.log(error);
     if (error instanceof ApiErrorHandling) {
-      res
+      return res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
     } else {
-      res
+      return res
         .status(HttpCodes.INTERNAL_SERVER_ERROR)
         .json(
           new ApiResponse(
