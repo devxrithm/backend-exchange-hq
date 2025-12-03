@@ -9,7 +9,7 @@ import { verifyJWT } from "../../middleware/JwtVerify";
 
 const AuthRouter: Router = Router();
 
-AuthRouter.post("/auth/login", verifyJWT, userLogin);
+AuthRouter.post("/auth/login", userLogin);
 AuthRouter.post("/auth/signup", userSignup);
 AuthRouter.post("/auth/logout", verifyJWT, userLogout);
 AuthRouter.post(

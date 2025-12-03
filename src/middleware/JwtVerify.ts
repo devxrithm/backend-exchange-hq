@@ -24,11 +24,13 @@ const verifyJWT: RequestHandler = async (
       throw new ApiErrorHandling(400, "token invalid");
     }
     const decodedToken = JwtVerifyAccessToken(token);
+
+    console.log(decodedToken);
     if (!decodedToken) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");
     }
     // console.log(decodedToken)
-    const user = await Auth.findById(decodedToken._id).select(
+    const user = await Auth.findById(decodedToken.UserPayLoad._id).select(
       "-password -refreshToken"
     );
     // console.log(user)
