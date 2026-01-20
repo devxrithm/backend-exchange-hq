@@ -1,6 +1,10 @@
 import { Producer, Admin, Kafka, logLevel, Message } from "kafkajs";
 import { config } from "../env-config/config";
-// import { config } from "../env-config/config";
+import fs from "node:fs";
+import path from "path";
+
+console.log("hello");
+
 
 class KafkaConfig {
   private producer: Producer;
@@ -10,14 +14,16 @@ class KafkaConfig {
 
   constructor() {
     this.brokers = String(config.KAFKA_URI);
-
     this.kafka = new Kafka({
       clientId: "my-app",
       brokers: [this.brokers],
+      ssl: {
+        ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
+      },
       sasl: {
-        mechanism: "plain", // scram-sha-256 or scram-sha-512
-        username: String(config.KAFKA_USERNAME),
-        password: String(config.KAFKA_PASSWORD),
+        mechanism: "plain",
+        username: "avnadmin",
+        password: "AVNS_xJxCcXAhGZgKZ3rgShJ",
       },
       logLevel: logLevel.ERROR,
     });
