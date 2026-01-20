@@ -1,11 +1,7 @@
 import { Auth } from "./AuthModel";
-import { ApiResponse } from "../../utils/ApiResponse";
-import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
-import { HttpCodes } from "../../lib/HttpCodes";
+import {ApiResponse,ApiErrorHandling,HttpCodes,jwtVerifyRefreshToken,getAccessAndRefreshToken} from "../../utils/utils-export"
 import { Request, Response, CookieOptions } from "express";
-import { AuthRequest } from "../../middleware/JwtVerify";
-import { JwtVerifyRefreshToken } from "../../utils/Jwt";
-import { getAccessAndRefreshToken } from "../../lib/GetAccessAndRefreshToken";
+import { AuthRequest } from "../../middleware/jwt-verify";
 
 const userSignup = async (
   req: Request<
@@ -228,7 +224,7 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
       );
     }
 
-    const user = JwtVerifyRefreshToken(localToken);
+    const user = jwtVerifyRefreshToken(localToken);
     if (!user) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
