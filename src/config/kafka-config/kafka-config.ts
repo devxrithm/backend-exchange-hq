@@ -13,9 +13,6 @@ class KafkaConfig {
     this.kafka = new Kafka({
       clientId: "my-app",
       brokers: [this.brokers],
-      ssl: {
-        
-      },
       sasl: {
         mechanism: "plain", // scram-sha-256 or scram-sha-512
         username: "avnadmin",
