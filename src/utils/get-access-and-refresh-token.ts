@@ -1,4 +1,4 @@
-import { Auth } from "../services/auth-services/AuthModel";
+import { Auth } from "../services/auth-services/auth-model";
 import { ApiErrorHandling } from "../utils/errors-handler/api-error-handling";
 import { HttpCodes } from "../utils/http-codes";
 
