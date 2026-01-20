@@ -1,4 +1,4 @@
-import Router from "express";
+import { Router } from "express";
 import {
   getUserBalance,
   updateUserBalance,
@@ -6,10 +6,10 @@ import {
 } from "./wallet-controllers";
 import { verifyJWT } from "../../middleware/jwt-verify";
 
-const walletRouter = Router();
+const walletRoutes: Router = Router();
 
-walletRouter.patch("/updateuserbalance", verifyJWT, updateUserBalance);
-walletRouter.post("/createwallet", verifyJWT, createWallet);
-walletRouter.get("/getuserbalance", verifyJWT, getUserBalance);
+walletRoutes.patch("/updateuserbalance", verifyJWT, updateUserBalance);
+walletRoutes.post("/createwallet", verifyJWT, createWallet);
+walletRoutes.get("/getuserbalance", verifyJWT, getUserBalance);
 
-export { walletRouter };
+export { walletRoutes };

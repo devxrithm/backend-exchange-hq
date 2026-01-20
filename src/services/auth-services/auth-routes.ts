@@ -7,15 +7,15 @@ import {
 } from "./auth-controllers";
 import { verifyJWT } from "../../middleware/jwt-verify";
 
-const authRouter: Router = Router();
+const authRoutes: Router = Router();
 
-authRouter.post("/login", userLogin);
-authRouter.post("/signup", userSignup);
-authRouter.post("/logout", verifyJWT, userLogout);
-authRouter.get(
+authRoutes.post("/login", userLogin);
+authRoutes.post("/signup", userSignup);
+authRoutes.post("/logout", verifyJWT, userLogout);
+authRoutes.get(
   "/new-refresh-token",
   verifyJWT,
-  genrateNewAccessAndRefreshToken
+  genrateNewAccessAndRefreshToken,
 );
 
-export { authRouter };
+export { authRoutes };
