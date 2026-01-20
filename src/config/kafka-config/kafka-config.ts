@@ -3,7 +3,6 @@ import { config } from "../env-config/config";
 import fs from "node:fs";
 import path from "path";
 
-console.log("hello");
 
 class KafkaConfig {
   private producer: Producer;
@@ -34,16 +33,6 @@ class KafkaConfig {
     try {
       await this.producer.connect();
       await this.admin.connect();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async createTopic(topic: string): Promise<void> {
-    try {
-      await this.admin.createTopics({
-        topics: [{ topic, numPartitions: 1 }],
-      });
     } catch (error) {
       console.log(error);
     }
