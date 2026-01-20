@@ -1,8 +1,12 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-import { ApiErrorHandling } from "../../utils/ApiErrorHandling";
-import { ComparePassword, HashPassword } from "../../utils/Bcrypt";
-import { AccessTokenJwtSign, RefreshTokenJwtSign } from "../../utils/Jwt";
-import { HttpCodes } from "../../lib/HttpCodes";
+import {
+  ApiErrorHandling,
+  HttpCodes,
+  accessTokenJwtSign,
+  refreshTokenJwtSign,
+  hashPassword,
+  comparePassword,
+} from "../../utils/utils-export";
 
 interface IAuth extends Document {
   fullName: string;
@@ -44,7 +48,7 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
 UserSchema.pre<IAuth>("save", async function () {
   try {
     if (!this.isModified("password")) return;
-    this.password = await HashPassword(this.password, 10);
+    this.password = await hashPassword(this.password, 10);
   } catch (error) {
     const msg =
       error instanceof ApiErrorHandling ? error.message : String(error);
@@ -59,12 +63,12 @@ UserSchema.pre<IAuth>("save", async function () {
 //this inbuilt function is used to create a custom own method, which further used in to check password and all
 
 UserSchema.methods.IsPasswordCorrect = async function (password: string) {
-  return await ComparePassword(password, this.password);
+  return await comparePassword(password, this.password);
 };
 
 // generate access and refresh token via mongoose inbuilt method generator, use this keyword to access
 UserSchema.methods.GenrateAccessToken = function () {
-  return AccessTokenJwtSign({
+  return accessTokenJwtSign({
     _id: this._id,
     email: this.email,
     fullName: this.fullName,
@@ -72,7 +76,7 @@ UserSchema.methods.GenrateAccessToken = function () {
 };
 
 UserSchema.methods.GenrateRefreshToken = function () {
-  return RefreshTokenJwtSign({
+  return refreshTokenJwtSign({
     _id: this._id,
   });
 };

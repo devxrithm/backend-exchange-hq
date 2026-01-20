@@ -1,9 +1,6 @@
 import { Auth } from "../services/authServices/AuthModel";
-import { ApiErrorHandling } from "../utils/ApiErrorHandling";
 import { NextFunction, Request, RequestHandler, Response } from "express";
-import { JwtVerifyAccessToken } from "../utils/Jwt";
-import { HttpCodes } from "../lib/HttpCodes";
-import { ApiResponse } from "../utils/ApiResponse";
+import {ApiResponse,HttpCodes,jwtVerifyAccessToken,ApiErrorHandling} from "../utils/utils-export"
 
 export interface AuthRequest extends Request {
   user?: {
@@ -23,7 +20,7 @@ const verifyJWT: RequestHandler = async (
     if (!token) {
       throw new ApiErrorHandling(400, "token invalid");
     }
-    const decodedToken = JwtVerifyAccessToken(token);
+    const decodedToken = jwtVerifyAccessToken(token);
 
     if (!decodedToken) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");

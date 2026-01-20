@@ -1,12 +1,12 @@
 import { Auth } from "../services/authServices/AuthModel";
-import { ApiErrorHandling } from "../utils/ApiErrorHandling";
-import { HttpCodes } from "./HttpCodes";
+import { ApiErrorHandling } from "../utils/errors-handler/api-error-handling";
+import { HttpCodes } from "../utils/http-codes";
 
 const getAccessAndRefreshToken = async (userId: string) => {
   try {
     const user = await Auth.findById(userId);
 
-    console.log(user)
+    console.log(user);
     // console.log(user)
     if (!user) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "User not found");
