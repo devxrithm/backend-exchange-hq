@@ -1,5 +1,11 @@
-import { Auth } from "./AuthModel";
-import {ApiResponse,ApiErrorHandling,HttpCodes,jwtVerifyRefreshToken,getAccessAndRefreshToken} from "../../utils/utils-export"
+import { Auth } from "./auth-model";
+import {
+  ApiResponse,
+  ApiErrorHandling,
+  HttpCodes,
+  jwtVerifyRefreshToken,
+  getAccessAndRefreshToken,
+} from "../../utils/utils-export";
 import { Request, Response, CookieOptions } from "express";
 import { AuthRequest } from "../../middleware/jwt-verify";
 

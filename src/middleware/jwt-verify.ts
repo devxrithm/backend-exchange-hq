@@ -1,6 +1,11 @@
-import { Auth } from "../services/authServices/AuthModel";
+import { Auth } from "../services/auth-services/auth-model";
 import { NextFunction, Request, RequestHandler, Response } from "express";
-import {ApiResponse,HttpCodes,jwtVerifyAccessToken,ApiErrorHandling} from "../utils/utils-export"
+import {
+  ApiResponse,
+  HttpCodes,
+  jwtVerifyAccessToken,
+  ApiErrorHandling,
+} from "../utils/utils-export";
 
 export interface AuthRequest extends Request {
   user?: {
