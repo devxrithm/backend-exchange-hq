@@ -12,23 +12,20 @@ const updateUserBalance = async (req: AuthRequest, res: Response) => {
     const userid = req.user?._id;
     const balance = 10000;
     if (!userid) {
-      throw new ApiErrorHandling(
-        401,
-        "something went wrong while updating balance"
-      );
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
     }
     //check if balance is full or not
     const wallet = await Wallet.findOne({ user: userid });
 
     if (!wallet || null) {
       throw new ApiErrorHandling(
-        401,
-        "kindly create wallet first before updating balance"
+        HttpCodes.NOT_FOUND,
+        "Wallet not found. Create wallet first",
       );
     }
 
     if (!(wallet.currencyAmount[0].balance < balance)) {
-      throw new ApiErrorHandling(401, "wallet already fill");
+      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet already fill");
     }
     //update wallet balance
     const user = await Wallet.findOneAndUpdate(
@@ -38,13 +35,17 @@ const updateUserBalance = async (req: AuthRequest, res: Response) => {
           balance: balance,
         },
       },
-      { new: true }
+      { new: true },
     );
 
     res
-      .status(200)
+      .status(HttpCodes.OK)
       .json(
-        new ApiResponse(200, { user }, "user balance updated successfully")
+        new ApiResponse(
+          HttpCodes.OK,
+          { user },
+          "user balance updated successfully",
+        ),
       );
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
@@ -58,8 +59,8 @@ const updateUserBalance = async (req: AuthRequest, res: Response) => {
           new ApiResponse(
             HttpCodes.INTERNAL_SERVER_ERROR,
             null,
-            "Internal Server Error"
-          )
+            "Internal Server Error",
+          ),
         );
     }
   }
@@ -69,16 +70,13 @@ const createWallet = async (req: AuthRequest, res: Response) => {
   try {
     const userid = req.user?._id;
     if (!userid) {
-      throw new ApiErrorHandling(
-        401,
-        "something went wrong while creating wallet"
-      );
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }
 
     const existingWallet = await Wallet.findOne({ user: userid });
     console.log(existingWallet);
     if (existingWallet) {
-      throw new ApiErrorHandling(401, "wallet already exist");
+      throw new ApiErrorHandling(HttpCodes.CONFLICT, "wallet already exist");
     }
 
     const userWallet = await Wallet.create({
@@ -89,9 +87,13 @@ const createWallet = async (req: AuthRequest, res: Response) => {
     });
 
     res
-      .status(200)
+      .status(HttpCodes.CREATED)
       .json(
-        new ApiResponse(200, { userWallet }, "wallet created successfully")
+        new ApiResponse(
+          HttpCodes.CREATED,
+          { userWallet },
+          "wallet created successfully",
+        ),
       );
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
@@ -105,8 +107,8 @@ const createWallet = async (req: AuthRequest, res: Response) => {
           new ApiResponse(
             HttpCodes.INTERNAL_SERVER_ERROR,
             null,
-            "Internal Server Error"
-          )
+            "Internal Server Error",
+          ),
         );
     }
   }
@@ -115,14 +117,21 @@ const createWallet = async (req: AuthRequest, res: Response) => {
 const getUserBalance = async (req: AuthRequest, res: Response) => {
   try {
     const userid = req.user?._id;
+
+    if (!userid) {
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
+    }
+
     const user = await Wallet.findOne({ user: userid });
     if (!user) {
-      throw new ApiErrorHandling(401, "something went wrong");
+      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallet not found");
     }
     const currBalance = user.currencyAmount;
     res
-      .status(200)
-      .json(new ApiResponse(200, { currBalance }, "user updated balance"));
+      .status(HttpCodes.OK)
+      .json(
+        new ApiResponse(HttpCodes.OK, { currBalance }, "user updated balance"),
+      );
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
       res
@@ -135,8 +144,8 @@ const getUserBalance = async (req: AuthRequest, res: Response) => {
           new ApiResponse(
             HttpCodes.INTERNAL_SERVER_ERROR,
             null,
-            "Internal Server Error"
-          )
+            "Internal Server Error",
+          ),
         );
     }
   }
