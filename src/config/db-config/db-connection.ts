@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { config } from "./config";
-import { ApiErrorHandling } from "../utils/ApiErrorHandling";
+import { config } from "../env-config/config";
+import { ApiErrorHandling } from "../../utils/utils-export";
 
 const dbConnect = async () => {
   try {
