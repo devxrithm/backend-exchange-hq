@@ -12,6 +12,9 @@ const _config = {
   KAFKA_URI: process.env.KAFKA_URI,
   KAFKA_USERNAME: process.env.KAFKA_USERNAME,
   KAFKA_PASSWORD: process.env.KAFKA_PASSWORD,
+  REDIS_URI: process.env.REDIS_URI,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+  REDIS_PORT: process.env.REDIS_PORT,
 };
 
 export const config = Object.freeze(_config);
