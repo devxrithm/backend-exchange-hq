@@ -3,7 +3,6 @@ import { config } from "../env-config/config";
 import fs from "node:fs";
 import path from "path";
 
-
 class KafkaConfig {
   private producer: Producer;
   private admin: Admin;
