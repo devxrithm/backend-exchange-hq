@@ -5,7 +5,6 @@ import path from "path";
 
 console.log("hello");
 
-
 class KafkaConfig {
   private producer: Producer;
   private admin: Admin;
@@ -22,8 +21,8 @@ class KafkaConfig {
       },
       sasl: {
         mechanism: "plain",
-        username: "avnadmin",
-        password: "AVNS_xJxCcXAhGZgKZ3rgShJ",
+        username: String(config.KAFKA_USERNAME),
+        password: String(config.KAFKA_PASSWORD),
       },
       logLevel: logLevel.ERROR,
     });
