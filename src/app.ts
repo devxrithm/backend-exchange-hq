@@ -16,6 +16,6 @@ app.use(cookieParser()); //for managing cookies
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
-app.use("/api", walletRouter);
+app.use("/api/wallet", walletRouter);
 
 export { app };
