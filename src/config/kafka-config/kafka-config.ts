@@ -1,4 +1,5 @@
 import { Producer, Admin, Kafka, logLevel, Message } from "kafkajs";
+import { config } from "../env-config/config";
 // import { config } from "../env-config/config";
 
 class KafkaConfig {
@@ -8,15 +9,15 @@ class KafkaConfig {
   private kafka: Kafka;
 
   constructor() {
-    this.brokers = "kafka-streams-ukcode07-4ffe.i.aivencloud.com:10314";
+    this.brokers = String(config.KAFKA_URI);
 
     this.kafka = new Kafka({
       clientId: "my-app",
       brokers: [this.brokers],
       sasl: {
         mechanism: "plain", // scram-sha-256 or scram-sha-512
-        username: "avnadmin",
-        password: "AVNS_xJxCcXAhGZgKZ3rgShJ",
+        username: String(config.KAFKA_USERNAME),
+        password: String(config.KAFKA_PASSWORD),
       },
       logLevel: logLevel.ERROR,
     });
