@@ -6,6 +6,7 @@ import { authRoutes } from "./services/auth-services/auth-routes";
 import { walletRoutes } from "./services/wallet-services/wallet-routes";
 import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
 import kafkaProducer from "./services/kafka-services/kafka-producer";
+import kafkaConsumer from "./services/kafka-services/kafka-consumer";
 
 dotenv.config({
   path: "./.env",
@@ -36,5 +37,18 @@ app.post(
     });
   },
 );
+
+app.get("/get", async (_req, res) => {
+  // console.log(req.body);
+  // const { orderID, symbols } = req.body;
+
+  await kafkaConsumer.subscribeToTopic("orders");
+  await kafkaConsumer.consume(async (message) => {
+    console.log("message receiving started", message);
+  });
+  res.status(200).json({
+    message: "post get succesfully",
+  });
+});
 
 export { app };

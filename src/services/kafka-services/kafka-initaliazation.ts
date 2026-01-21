@@ -5,10 +5,10 @@ export const initKafkaService = async () => {
   try {
     await kafkaProducer.connectToProducer();
     await kafkaConsumer.connectToConsumer();
-
-    
   } catch (error) {
     console.log(error);
     process.exit(1);
   }
 };
+
+
