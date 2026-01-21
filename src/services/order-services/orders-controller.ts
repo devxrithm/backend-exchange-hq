@@ -167,7 +167,7 @@ const sellOrder = async (
 
     const totalAmount = orderQuantity * entryPrice;
 
-    await Order.create({
+    const order = await Order.create({
       user: userId,
       currencyPair,
       orderType,
@@ -186,8 +186,9 @@ const sellOrder = async (
 
     return res
       .status(HttpCodes.OK)
-      .json(new ApiResponse(HttpCodes.OK, null, "Sell order executed"));
+      .json(new ApiResponse(HttpCodes.OK, order, "Sell order executed"));
   } catch (error) {
+    console.log(error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)
