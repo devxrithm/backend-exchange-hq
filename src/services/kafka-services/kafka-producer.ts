@@ -10,13 +10,13 @@ class KafkaProducer {
     this.admin = kafkaConfig.getClient().admin();
   }
 
-  async connect(): Promise<void> {
+  async connectToProducer(): Promise<void> {
     await this.admin.connect();
     await this.producer.connect();
     console.log("Kafka Producer connected");
   }
 
-  async send(topic: string, messages: Message[]): Promise<void> {
+  async sendToConsumer(topic: string, messages: Message[]): Promise<void> {
     await this.producer.send({
       topic,
       messages,
