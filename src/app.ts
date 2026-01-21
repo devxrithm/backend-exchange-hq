@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { authRoutes } from "./services/auth-services/auth-routes";
 import { walletRoutes } from "./services/wallet-services/wallet-routes";
-import { initKafkaService } from "./config/kafka-config/kafka-initaliazation";
+import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
 
 dotenv.config({
   path: "./.env",

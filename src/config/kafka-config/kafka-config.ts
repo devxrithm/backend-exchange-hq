@@ -1,13 +1,11 @@
-import { Producer, Admin, Kafka, logLevel, Message } from "kafkajs";
+import { Kafka, logLevel } from "kafkajs";
 import { config } from "../env-config/config";
 import fs from "node:fs";
 import path from "path";
 
 class KafkaConfig {
-  private producer: Producer;
-  private admin: Admin;
-  private brokers: string;
   private kafka: Kafka;
+  private brokers: string;
 
   constructor() {
     this.brokers = String(config.KAFKA_URI);
@@ -24,29 +22,12 @@ class KafkaConfig {
       },
       logLevel: logLevel.ERROR,
     });
-    this.producer = this.kafka.producer();
-    this.admin = this.kafka.admin();
   }
-
-  async connect(): Promise<void> {
-    try {
-      await this.producer.connect();
-      await this.admin.connect();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async sendToTopic(topic: string, messages: Message[]): Promise<void> {
-    try {
-      await this.producer.send({
-        topic,
-        messages,
-      });
-    } catch (error) {
-      console.log(error);
-    }
+  getClient(): Kafka {
+    return this.kafka;
   }
 }
 
 export default new KafkaConfig();
+
+console.log(new KafkaConfig());

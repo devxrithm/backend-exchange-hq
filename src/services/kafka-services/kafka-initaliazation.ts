@@ -1,8 +1,8 @@
-import KafkaConfig from "./kafka-config";
+import kafkaProducer from "./kafka-producer";
 
 export const initKafkaService = async () => {
   try {
-    await KafkaConfig.connect();
+    await kafkaProducer.connect();
   } catch (error) {
     console.log(error);
     process.exit(1);
