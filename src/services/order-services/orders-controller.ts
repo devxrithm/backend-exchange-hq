@@ -53,6 +53,7 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
     const usdt = wallet.currencyAmount.find(
       (c) => c.currency.toLowerCase() === "usdt",
     );
+
     if (!usdt) {
       throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "USDT balance not found");
     }
@@ -99,6 +100,8 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
       .status(HttpCodes.OK)
       .json(new ApiResponse(HttpCodes.OK, order, "Trade placed successfully"));
   } catch (error) {
+    console.log(error);
+
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)
@@ -147,6 +150,7 @@ const sellOrder = async (
     const token = wallet.currencyAmount.find(
       (c) => c.currency.toLowerCase() === currencyPair.toLowerCase(),
     );
+
     if (!token || token.balance < orderQuantity) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
@@ -202,7 +206,10 @@ const sellOrder = async (
   }
 };
 
-const openPosition = async (req: AuthRequest, res: Response): Promise<Response> => {
+const openPosition = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<Response> => {
   try {
     const userId = req.user?._id;
     if (!userId) {
