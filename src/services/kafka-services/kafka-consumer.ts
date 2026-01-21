@@ -19,7 +19,7 @@ class KafkaConsumer {
     await this.consumer.subscribe({ topic, fromBeginning: true });
   }
 
-  async consume(callback: (message: unknown) => void): Promise<void> {
+  async consume(callback: (message: string) => void): Promise<void> {
     await this.consumer.run({
       autoCommit: true,
       eachMessage: async ({ message }) => {
