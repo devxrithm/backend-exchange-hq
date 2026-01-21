@@ -1,4 +1,4 @@
-import { Producer, Message, Admin } from "kafkajs";
+import { Producer, Admin } from "kafkajs";
 import kafkaConfig from "../../config/kafka-config/kafka-config";
 
 class KafkaProducer {
@@ -16,11 +16,13 @@ class KafkaProducer {
     console.log("Kafka Producer connected");
   }
 
-  async sendToConsumer(topic: string, messages: Message[]): Promise<void> {
+  async sendToConsumer(topic: string, message: string): Promise<void> {
     await this.producer.send({
       topic,
-      messages,
+      messages: [{ value: message }],
     });
+
+    console.log("message send succesfully");
   }
 }
 

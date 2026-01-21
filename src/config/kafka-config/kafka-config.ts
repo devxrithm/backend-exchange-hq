@@ -29,5 +29,3 @@ class KafkaConfig {
 }
 
 export default new KafkaConfig();
-
-console.log(new KafkaConfig());

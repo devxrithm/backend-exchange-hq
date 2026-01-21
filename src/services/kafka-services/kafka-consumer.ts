@@ -12,7 +12,7 @@ class KafkaConsumer {
 
   async connectToConsumer(): Promise<void> {
     await this.consumer.connect();
-    console.log("Kafka Producer connected");
+    console.log("Kafka Consumer connected");
   }
 
   async subscribeToTopic(topic: string): Promise<void> {
