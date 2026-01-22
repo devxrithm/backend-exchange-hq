@@ -36,6 +36,7 @@
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
-    "mongoose": "^9.0.0"
+    "mongoose": "^9.0.0",
+    "redis": "^5.10.0"
   }
 }

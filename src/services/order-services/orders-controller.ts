@@ -9,6 +9,7 @@ import {
 import { AuthRequest } from "../../middleware/jwt-verify";
 import crypto from "node:crypto";
 import kafkaProducer from "../kafka-services/kafka-producer";
+import redisConnection from "../../config/redis-config/redis-connection";
 
 interface IBuyRequestBody {
   currencyPair: string;
@@ -23,7 +24,6 @@ interface ISellRequestBody extends IBuyRequestBody {
 }
 
 const uuid = crypto.randomUUID();
-console.log("orderid", uuid);
 
 const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -82,6 +82,12 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
       "orders-detail",
       JSON.stringify(buyOrder),
     );
+
+    //push to redis
+    await redisConnection
+      .getClient()
+      ?.json.set(`orderID:${uuid}`, "$", buyOrder);
+    console.log("order saved to redis");
 
     // Wallet update
     usdt.balance -= orderAmount;
@@ -230,6 +236,12 @@ const openPosition = async (
     if (!userId) {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
     }
+
+    const order = await redisConnection
+      .getClient()
+      .json.get("orderID:cbd4a194-53ce-4eeb-b920-91d07dfba7c6");
+    console.log(order);
+    console.log("order frpm redis");
 
     const trades = await Order.find({ user: userId }).sort({ createdAt: -1 });
 
