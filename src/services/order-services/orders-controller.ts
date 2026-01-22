@@ -18,13 +18,8 @@ interface IBuyRequestBody {
   orderAmount: number;
   orderSide: "BUY" | "SELL"; // USDT
 }
-interface ISellRequestBody {
-  currencyPair: string;
-  orderType: "market" | "limit";
-  entryPrice: number;
-  positionStatus: "open" | "closed";
+interface ISellRequestBody extends IBuyRequestBody {
   orderQuantity: number;
-  orderSide: "BUY" | "SELL"; // token quantity
 }
 
 const uuid = crypto.randomUUID();
