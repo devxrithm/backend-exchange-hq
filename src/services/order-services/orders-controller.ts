@@ -10,6 +10,14 @@ import { AuthRequest } from "../../middleware/jwt-verify";
 import crypto from "node:crypto";
 import kafkaProducer from "../kafka-services/kafka-producer";
 
+interface IBuyRequestBody {
+  currencyPair: string;
+  orderType: "market";
+  entryPrice: number;
+  positionStatus: "open" | "closed";
+  orderAmount: number;
+  orderSide: "BUY" | "SELL"; // USDT
+}
 interface ISellRequestBody {
   currencyPair: string;
   orderType: "market" | "limit";
@@ -73,8 +81,8 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
       orderAmount,
       orderQuantity,
     };
-
-    await kafkaProducer.sendToConsumer("orders", JSON.stringify(order));
+    //push to kafka
+    await kafkaProducer.sendToConsumer("orders-detail", JSON.stringify(order));
 
     // Wallet update
     usdt.balance -= orderAmount;

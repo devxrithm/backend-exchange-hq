@@ -13,29 +13,20 @@ export const initKafkaService = async () => {
   }
 };
 
-interface IBuyRequestBody {
-  user: string;
-  orderId: string;
-  orderSide: "BUY" | "SELL"; // USDT
-  currencyPair: string;
-  orderType: "market";
-  entryPrice: number;
-  positionStatus: "open" | "closed";
-  orderAmount: number;
-  orderQuantity: number;
-}
-
 const kafkaConsume = async () => {
   try {
-    await kafkaConsumer.subscribeToTopic("orders");
+    await kafkaConsumer.subscribeToTopic("orders-detail");
 
     await kafkaConsumer.consume(async (message) => {
       console.log("at initialization");
       console.log(message);
-      const order: IBuyRequestBody | string = message;
-      await Order.create(order);
+      await Order.create(message);
     });
   } catch (error) {
+    await kafkaConsumer.consume(async (message) => {
+      console.log("at error");
+      await Order.create(message);
+    });
     console.log(error);
   }
 };

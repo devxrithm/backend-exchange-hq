@@ -1,12 +1,13 @@
 import { Consumer } from "kafkajs";
 import kafkaConfig from "../../config/kafka-config/kafka-config";
+import { IOrder } from "../order-services/order-model";
 
 class KafkaConsumer {
   private consumer: Consumer;
 
   constructor() {
     this.consumer = kafkaConfig.getClient().consumer({
-      groupId: "ukcode",
+      groupId: "orders-deatils",
     });
   }
 
@@ -19,7 +20,7 @@ class KafkaConsumer {
     await this.consumer.subscribe({ topic, fromBeginning: true });
   }
 
-  async consume(callback: (kafkaMessage: string) => void): Promise<void> {
+  async consume(callback: (kafkaMessage: IOrder) => void): Promise<void> {
     await this.consumer.run({
       autoCommit: true,
       eachMessage: async ({ message }) => {

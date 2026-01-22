@@ -1,6 +1,6 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Types, Model } from "mongoose";
 
-interface IOrder extends Document {
+export interface IOrder extends Document {
   user: Types.ObjectId;
   orderId: string;
   currencyPair: string;
@@ -62,6 +62,6 @@ const orderSchema = new Schema<IOrder>(
   },
 );
 
-const Order = mongoose.model<IOrder>("Order", orderSchema);
+const Order: Model<IOrder> = mongoose.model<IOrder>("Order", orderSchema);
 
 export { Order };
