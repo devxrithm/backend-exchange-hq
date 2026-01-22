@@ -22,9 +22,13 @@ interface ISellRequestBody {
   currencyPair: string;
   orderType: "market" | "limit";
   entryPrice: number;
-  positionStatus: "closed";
-  orderQuantity: number; // token quantity
+  positionStatus: "open" | "closed";
+  orderQuantity: number;
+  orderSide: "BUY" | "SELL"; // token quantity
 }
+
+const uuid = crypto.randomUUID();
+console.log("orderid", uuid);
 
 const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -36,9 +40,6 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
       positionStatus,
       orderAmount,
     }: IBuyRequestBody = req.body;
-
-    const uuid = crypto.randomUUID();
-    console.log(uuid);
 
     const userId = req.user?._id;
     if (!userId) {
@@ -70,7 +71,7 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
 
     const orderQuantity = orderAmount / entryPrice;
 
-    const order = {
+    const buyOrder = {
       user: userId,
       orderId: uuid,
       orderSide,
@@ -82,7 +83,10 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
       orderQuantity,
     };
     //push to kafka
-    await kafkaProducer.sendToConsumer("orders-detail", JSON.stringify(order));
+    await kafkaProducer.sendToConsumer(
+      "orders-detail",
+      JSON.stringify(buyOrder),
+    );
 
     // Wallet update
     usdt.balance -= orderAmount;
@@ -104,7 +108,9 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
 
     return res
       .status(HttpCodes.OK)
-      .json(new ApiResponse(HttpCodes.OK, order, "Trade placed successfully"));
+      .json(
+        new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
+      );
   } catch (error) {
     console.log(error);
 
@@ -134,6 +140,7 @@ const sellOrder = async (
     const {
       currencyPair,
       orderType,
+      orderSide,
       entryPrice,
       positionStatus,
       orderQuantity,
@@ -172,15 +179,23 @@ const sellOrder = async (
 
     const totalAmount = orderQuantity * entryPrice;
 
-    const order = await Order.create({
+    const sellOrder = {
       user: userId,
+      orderId: uuid,
       currencyPair,
+      orderSide,
       orderType,
       entryPrice,
       positionStatus,
       orderQuantity,
       orderAmount: totalAmount,
-    });
+    };
+
+    //push to kafka
+    await kafkaProducer.sendToConsumer(
+      "orders-detail",
+      JSON.stringify(sellOrder),
+    );
 
     // Wallet update
     token.balance -= orderQuantity;
@@ -190,7 +205,7 @@ const sellOrder = async (
 
     return res
       .status(HttpCodes.OK)
-      .json(new ApiResponse(HttpCodes.OK, order, "Sell order executed"));
+      .json(new ApiResponse(HttpCodes.OK, sellOrder, "Sell order executed"));
   } catch (error) {
     console.log(error);
     if (error instanceof ApiErrorHandling) {
