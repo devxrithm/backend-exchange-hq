@@ -19,13 +19,17 @@ class KafkaConsumer {
     await this.consumer.subscribe({ topic, fromBeginning: true });
   }
 
-  async consume(callback: (message: string) => void): Promise<void> {
+  async consume(callback: (kafkaMessage: string) => void): Promise<void> {
     await this.consumer.run({
       autoCommit: true,
       eachMessage: async ({ message }) => {
         if (!message.value) return;
-        console.log(`New Message Recv..`);
-        callback(JSON.parse(message?.value?.toString())); //call anonymous function when calling
+        try {
+          const parsedMessage = JSON.parse(message.value.toString());
+          callback(parsedMessage);
+        } catch (err) {
+          console.error("Invalid JSON message", err);
+        }
       },
     });
   }

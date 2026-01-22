@@ -7,15 +7,8 @@ import {
   HttpCodes,
 } from "../../utils/utils-export";
 import { AuthRequest } from "../../middleware/jwt-verify";
-
-interface IBuyRequestBody {
-  currencyPair: string;
-  orderType: "market" | "limit";
-  entryPrice: number;
-  positionStatus: "open" | "closed";
-  orderAmount: number; // USDT
-  pnl?: number;
-}
+import crypto from "node:crypto";
+import kafkaProducer from "../kafka-services/kafka-producer";
 
 interface ISellRequestBody {
   currencyPair: string;
@@ -23,19 +16,21 @@ interface ISellRequestBody {
   entryPrice: number;
   positionStatus: "closed";
   orderQuantity: number; // token quantity
-  pnl?: number;
 }
 
 const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const {
       currencyPair,
+      orderSide,
       orderType,
       entryPrice,
       positionStatus,
       orderAmount,
-      pnl,
     }: IBuyRequestBody = req.body;
+
+    const uuid = crypto.randomUUID();
+    console.log(uuid);
 
     const userId = req.user?._id;
     if (!userId) {
@@ -67,16 +62,19 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
 
     const orderQuantity = orderAmount / entryPrice;
 
-    const order = await Order.create({
+    const order = {
       user: userId,
+      orderId: uuid,
+      orderSide,
       currencyPair,
       orderType,
       entryPrice,
       positionStatus,
       orderAmount,
       orderQuantity,
-      pnl,
-    });
+    };
+
+    await kafkaProducer.sendToConsumer("orders", JSON.stringify(order));
 
     // Wallet update
     usdt.balance -= orderAmount;
@@ -131,7 +129,6 @@ const sellOrder = async (
       entryPrice,
       positionStatus,
       orderQuantity,
-      pnl,
     }: ISellRequestBody = req.body;
 
     const userId = req.user?._id;
@@ -175,7 +172,6 @@ const sellOrder = async (
       positionStatus,
       orderQuantity,
       orderAmount: totalAmount,
-      pnl,
     });
 
     // Wallet update

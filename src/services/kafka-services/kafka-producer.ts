@@ -19,10 +19,14 @@ class KafkaProducer {
   async sendToConsumer(topic: string, message: string): Promise<void> {
     await this.producer.send({
       topic,
-      messages: [{ value: message }],
+      messages: [
+        {
+          value: message,
+        },
+      ],
     });
 
-    console.log("message send succesfully");
+    console.log("Message sent successfully", message);
   }
 }
 

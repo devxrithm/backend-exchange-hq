@@ -9,6 +9,7 @@ import kafkaProducer from "./services/kafka-services/kafka-producer";
 import kafkaConsumer from "./services/kafka-services/kafka-consumer";
 import { orderRoutes } from "./services/order-services/order-routes";
 
+
 dotenv.config({
   path: "./.env",
 });

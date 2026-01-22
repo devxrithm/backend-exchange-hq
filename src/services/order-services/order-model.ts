@@ -2,13 +2,14 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 interface IOrder extends Document {
   user: Types.ObjectId;
+  orderId: string;
   currencyPair: string;
   orderQuantity: number;
   orderAmount: number;
   orderType: string;
+  orderSide: string;
   entryPrice: number;
   positionStatus: string;
-  pnl: number;
 }
 
 const orderSchema = new Schema<IOrder>(
@@ -17,6 +18,11 @@ const orderSchema = new Schema<IOrder>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
     },
     currencyPair: {
       type: String,
@@ -30,24 +36,25 @@ const orderSchema = new Schema<IOrder>(
       type: Number,
       required: true,
     },
-    orderType: {
-      type: String,
-      enum: ["BUY", "SELL"],
-      required: true,
-    },
     entryPrice: {
       type: Number,
       required: true,
       default: 0,
     },
+    orderSide: {
+      type: String,
+      enum: ["BUY", "SELL"],
+      required: true,
+    },
+    orderType: {
+      type: String,
+      enum: ["Market"],
+      required: true,
+    },
     positionStatus: {
       type: String,
       enum: ["Pending", "Filled", "Closed", "Cancelled"],
       default: "Pending",
-    },
-    pnl: {
-      type: Number,
-      default: 0,
     },
   },
   {
