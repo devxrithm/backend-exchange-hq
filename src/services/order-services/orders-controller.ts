@@ -66,16 +66,27 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
     const orderQuantity = orderAmount / entryPrice;
 
     const buyOrder = {
-      user: userId.toString(),
+      user: userId,
       orderId: uuid,
       orderSide,
       currencyPair,
       orderType,
-      entryPrice: entryPrice.toString(),
+      entryPrice,
       positionStatus,
-      orderAmount: orderAmount.toString(),
-      orderQuantity: orderQuantity.toString(),
+      orderAmount,
+      orderQuantity,
     };
+    // const buyOrder = {
+    //   user: userId.toString(),
+    //   orderId: uuid,
+    //   orderSide,
+    //   currencyPair,
+    //   orderType,
+    //   entryPrice: entryPrice.toString(),
+    //   positionStatus,
+    //   orderAmount: orderAmount.toString(),
+    //   orderQuantity: orderQuantity.toString(),
+    // };
     //push to kafka
     await kafkaProducer.sendToConsumer(
       "orders-detail",
@@ -83,7 +94,10 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
     );
 
     //push to redis
-    await redisConnection.getClient()?.hSet(`orderID:${uuid}`, buyOrder);
+    await redisConnection
+      .getClient()
+      ?.json.set(`orderID:${uuid}`, "$", buyOrder);
+
     console.log("order saved to redis");
     await redisConnection.getClient()?.sAdd(`userOrders:${userId}`, uuid);
 
@@ -202,6 +216,7 @@ const sellOrder = async (
       ?.json.set(`orderID:${uuid}`, "$", sellOrder);
     console.log("order saved to redis");
 
+    await redisConnection.getClient()?.sAdd(`userOrders:${userId}`, uuid);
     // Wallet update
     token.balance -= orderQuantity;
     usdt.balance += totalAmount;
@@ -245,19 +260,14 @@ const openPosition = async (
     const orderIds = await redisConnection
       .getClient()
       .sMembers(`userOrders:${userId}`);
-    // console.log(orderIds);
+    console.log(orderIds);
 
-    // fetch order details
     const orders = await Promise.all(
       orderIds.map(async (id) => {
-        const order = await redisConnection
-          .getClient()
-          .hGetAll(`orderID:${id}`);
-        return order;
+        return redisConnection.getClient().json.get(`orderID:${id}`);
       }),
     );
-
-    // console.log(orders);
+    console.log(orders);
     // const trades = await Order.find({ user: userId }).sort({ createdAt: -1 });
 
     return res
