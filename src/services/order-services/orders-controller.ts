@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Order } from "./order-model";
+// import { Order } from "./order-model";
 import { Wallet } from "../wallet-services/wallet-model";
 import {
   ApiErrorHandling,
@@ -23,10 +23,9 @@ interface ISellRequestBody extends IBuyRequestBody {
   orderQuantity: number;
 }
 
-const uuid = crypto.randomUUID();
-
 const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
+    const uuid = crypto.randomUUID();
     const {
       currencyPair,
       orderSide,
@@ -67,15 +66,15 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
     const orderQuantity = orderAmount / entryPrice;
 
     const buyOrder = {
-      user: userId,
+      user: userId.toString(),
       orderId: uuid,
       orderSide,
       currencyPair,
       orderType,
-      entryPrice,
+      entryPrice: entryPrice.toString(),
       positionStatus,
-      orderAmount,
-      orderQuantity,
+      orderAmount: orderAmount.toString(),
+      orderQuantity: orderQuantity.toString(),
     };
     //push to kafka
     await kafkaProducer.sendToConsumer(
@@ -84,10 +83,9 @@ const buyOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
     );
 
     //push to redis
-    await redisConnection
-      .getClient()
-      ?.json.set(`orderID:${uuid}`, "$", buyOrder);
+    await redisConnection.getClient()?.hSet(`orderID:${uuid}`, buyOrder);
     console.log("order saved to redis");
+    await redisConnection.getClient()?.sAdd(`userOrders:${userId}`, uuid);
 
     // Wallet update
     usdt.balance -= orderAmount;
@@ -138,6 +136,7 @@ const sellOrder = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    const uuid = crypto.randomUUID();
     const {
       currencyPair,
       orderType,
@@ -198,6 +197,11 @@ const sellOrder = async (
       JSON.stringify(sellOrder),
     );
 
+    await redisConnection
+      .getClient()
+      ?.json.set(`orderID:${uuid}`, "$", sellOrder);
+    console.log("order saved to redis");
+
     // Wallet update
     token.balance -= orderQuantity;
     usdt.balance += totalAmount;
@@ -237,17 +241,28 @@ const openPosition = async (
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
     }
 
-    const order = await redisConnection
+    // orderIds
+    const orderIds = await redisConnection
       .getClient()
-      .json.get("orderID:cbd4a194-53ce-4eeb-b920-91d07dfba7c6");
-    console.log(order);
-    console.log("order frpm redis");
+      .sMembers(`userOrders:${userId}`);
+    // console.log(orderIds);
 
-    const trades = await Order.find({ user: userId }).sort({ createdAt: -1 });
+    // fetch order details
+    const orders = await Promise.all(
+      orderIds.map(async (id) => {
+        const order = await redisConnection
+          .getClient()
+          .hGetAll(`orderID:${id}`);
+        return order;
+      }),
+    );
+
+    // console.log(orders);
+    // const trades = await Order.find({ user: userId }).sort({ createdAt: -1 });
 
     return res
       .status(HttpCodes.OK)
-      .json(new ApiResponse(HttpCodes.OK, trades, "Live trades"));
+      .json(new ApiResponse(HttpCodes.OK, orders, "Live trades"));
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
       return res
