@@ -7,6 +7,8 @@ interface ICurrencyAmount {
 
 export interface IWallet extends Document {
   user: Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
   currencyAmount: ICurrencyAmount[];
 }
 

@@ -13,6 +13,8 @@ interface IAuth extends Document {
   email: string;
   password: string;
   refreshToken: string;
+  createdAt: Date;
+  updatedAt: Date;
   GenrateAccessToken(): string;
   GenrateRefreshToken(): string;
   IsPasswordCorrect(password: string): Promise<boolean>;
@@ -40,7 +42,7 @@ const UserSchema: Schema<IAuth> = new Schema<IAuth>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 //do some stuff before saving password. it will convert plain password in random salt using bcrypt library . this function used mongoose inBuilt middleware hook 'pre' which is genrally used to do some stuff in data before saving in a database
@@ -55,7 +57,7 @@ UserSchema.pre<IAuth>("save", async function () {
     throw new ApiErrorHandling(
       HttpCodes.INTERNAL_SERVER_ERROR,
       "Internal Server Error",
-      [msg]
+      [msg],
     );
   }
 });

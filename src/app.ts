@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { authRoutes } from "./services/auth-services/auth-routes";
 import { walletRoutes } from "./services/wallet-services/wallet-routes";
-import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
+// import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
 import { orderRoutes } from "./services/order-services/order-routes";
 import { redisInit } from "./config/redis-config/redis-initialisatio";
 
@@ -12,7 +12,7 @@ dotenv.config({
   path: "./.env",
 });
 const app = express();
-initKafkaService();
+// initKafkaService();
 redisInit();
 
 app.use(cors());

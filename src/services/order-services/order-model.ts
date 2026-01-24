@@ -10,6 +10,9 @@ export interface IOrder extends Document {
   orderSide: string;
   entryPrice: number;
   positionStatus: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
