@@ -1,10 +1,10 @@
 import { Order } from "../order-services/order-model";
 import kafkaConsumer from "./kafka-consumer";
-import kafkaProducer from "./kafka-producer";
+import { Kafka } from "./kafka-producer";
 
 export const initKafkaService = async () => {
   try {
-    await kafkaProducer.connectToProducer();
+    await Kafka.connectToProducer();
     await kafkaConsumer.connectToConsumer();
     await kafkaConsume();
   } catch (error) {
