@@ -10,7 +10,7 @@ const dbConnect = async () => {
     if (error instanceof ApiErrorHandling) {
       throw new ApiErrorHandling(401, error.message, error.errors);
     }
-    throw new ApiErrorHandling(401, "server error");
+    throw new ApiErrorHandling(501, "server error");
   }
 };
 
