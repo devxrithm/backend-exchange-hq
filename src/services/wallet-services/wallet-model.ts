@@ -14,11 +14,11 @@ const walletSchema = new mongoose.Schema<IWallet>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
     asset: {
       type: String, // BTC, ETH, USDT
       required: true,
+      unique: true,
     },
     balance: {
       type: Number,

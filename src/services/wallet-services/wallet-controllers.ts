@@ -80,7 +80,7 @@ const createWallet = async (req: AuthRequest, res: Response) => {
 
     const userWallet = await Wallet.create({
       user: userid,
-      asset: "USDT",
+      asset: "usdt",
       balance: 10000,
     });
 
@@ -120,7 +120,7 @@ const getUserBalance = async (req: AuthRequest, res: Response) => {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }
 
-    const asset = req.params.asset?.toUpperCase();
+    const asset = req.params.asset;
     const redis = Redis.getClient();
     const redisKey = `wallet:${userid}:${asset}`;
 

@@ -18,8 +18,6 @@ const kafkaConsume = async () => {
     await kafkaConsumer.subscribeToTopic("orders-detail");
 
     await kafkaConsumer.consume(async (message) => {
-      console.log("at initialization");
-      // console.log(message);
       await Order.create(message);
     });
   } catch (error) {

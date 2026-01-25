@@ -25,8 +25,6 @@ class KafkaProducer {
         },
       ],
     });
-
-    console.log("Message sent successfully", message);
   }
 }
 

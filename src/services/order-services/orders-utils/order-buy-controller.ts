@@ -3,7 +3,6 @@ import {
   AuthRequest,
   HttpCodes,
   IBuyRequestBody,
-  Wallet,
   Response,
   Redis,
   ApiResponse,
@@ -33,68 +32,65 @@ export const buyOrder = async (
         "User not authenticated",
       );
     }
+    //db call
 
-    const wallet = await Wallet.findOne({ user: userId });
-    if (!wallet) {
-      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallet not found");
+    const redisKey = `wallet:${userId}:usdt`;
+    const wallet = await Redis.getClient().hmGet(redisKey, [
+      "asset",
+      "balance",
+    ]);
+    const walletBalance = wallet[1];
+    if (wallet) {
+      if (orderAmount > Number(walletBalance)) {
+        throw new ApiErrorHandling(
+          HttpCodes.BAD_REQUEST,
+          "Insufficient USDT balance",
+        );
+      }
+
+      const orderQuantity = orderAmount / entryPrice;
+
+      const buyOrder = {
+        user: userId.toString(),
+        orderId: uuid,
+        orderSide,
+        currencyPair,
+        orderType,
+        entryPrice: entryPrice.toString(),
+        positionStatus,
+        orderAmount: orderAmount.toString(),
+        orderQuantity: orderQuantity.toString(),
+      };
+      //push to kafka
+      await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+
+      //push to redis
+      Redis.getClient()
+        .multi()
+        .hSet(`orderID:${uuid}`, buyOrder)
+        .expire(`orderID:${uuid}`, 60)
+        .sAdd(`user:openOrders:${userId}`, uuid)
+        .exec();
     }
-
-    const usdt = wallet.currencyAmount.find(
-      (c) => c.currency.toLowerCase() === "usdt",
-    );
-
-    if (!usdt) {
-      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "USDT balance not found");
-    }
-
-    if (orderAmount > usdt.balance) {
-      throw new ApiErrorHandling(
-        HttpCodes.BAD_REQUEST,
-        "Insufficient USDT balance",
-      );
-    }
-
-    const orderQuantity = orderAmount / entryPrice;
-
-    const buyOrder = {
-      user: userId.toString(),
-      orderId: uuid,
-      orderSide,
-      currencyPair,
-      orderType,
-      entryPrice: entryPrice.toString(),
-      positionStatus,
-      orderAmount: orderAmount.toString(),
-      orderQuantity: orderQuantity.toString(),
-    };
-    //push to kafka
-    await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
-
-    //push to redis
-    Redis.getClient()
-      .multi()
-      .hSet(`orderID:${uuid}`, buyOrder)
-      .expire(`orderID:${uuid}`, 60)
-      .sAdd(`user:openOrders:${userId}`, uuid)
-      .exec();
-
+    // const walletFromDb = await Wallet.findOne({ user: userId, asset: "usdt" });
     // Wallet update
-    usdt.balance -= orderAmount;
+    // wallet.balance -= orderAmount;
 
-    const token = wallet.currencyAmount.find(
-      (c) => c.currency.toLowerCase() === currencyPair.toLowerCase(),
-    );
+    // const walletToken = await Wallet.findOne({
+    //   user: userId,
+    //   asset: currencyPair,
+    // });
+    // if (!walletToken) {
+    //   await Wallet.create({
+    //     user: userId,
+    //     asset: currencyPair,
+    //     balance: orderQuantity,
+    //   });
+    // } else {
+    //   walletToken.balance += orderQuantity;
+    // }
 
-    if (token) {
-      token.balance += orderQuantity;
-    } else {
-      wallet.currencyAmount.push({
-        currency: currencyPair,
-        balance: orderQuantity,
-      });
-    }
-
-    await wallet.save();
+    // await wallet.save();
 
     return res
       .status(HttpCodes.OK)
