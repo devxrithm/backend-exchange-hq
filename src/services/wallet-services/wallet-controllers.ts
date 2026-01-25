@@ -114,46 +114,39 @@ const createWallet = async (req: AuthRequest, res: Response) => {
 
 const getUserBalance = async (req: AuthRequest, res: Response) => {
   try {
-    // const userid = req.user?._id;
-    const userid = "696f330085f796568d1339ea";
+    const userid = req.user?._id;
+    // const userid = "696f330085f796568d1339ea";
     if (!userid) {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }
 
     const asset = req.params.asset?.toUpperCase();
-
+    const redis = Redis.getClient();
     const redisKey = `wallet:${userid}:${asset}`;
 
-    // 1️⃣ Try Redis first
-    // console.time("redis");
-    const cachedWallet = await Redis.getClient().get(redisKey);
-    // console.timeEnd("redis");
-    if (cachedWallet) {
+    const cached = await redis.hmGet(redisKey, ["asset", "balance"]);
+    if (cached[0]) {
       return res
-        .status(HttpCodes.OK)
-        .json(
-          new ApiResponse(
-            HttpCodes.OK,
-            JSON.parse(cachedWallet),
-            "wallet balance (from cache)",
-          ),
-        );
+        .status(200)
+        .json(new ApiResponse(200, cached, "wallet balance (cache)"));
     }
 
     const wallet = await Wallet.findOne({ user: userid, asset });
     if (!wallet) {
       throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallet not found");
     }
-    // 3️⃣ Normalize Decimal128
+
     const responseData = {
       asset: wallet.asset,
       balance: wallet.balance.toString(),
     };
 
-    // 4️⃣ Cache it
-    await Redis.getClient().set(redisKey, JSON.stringify(responseData), {
-      EX: 120, // short TTL (important!)
-    });
+    // push to redis
+    await Promise.all([
+      Redis.getClient().hSet(redisKey, responseData),
+      Redis.getClient().expire(redisKey, 600),
+    ]);
+
     return res
       .status(HttpCodes.OK)
       .json(
