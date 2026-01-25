@@ -25,7 +25,7 @@ export const buyOrder = async (
       positionStatus,
       orderAmount,
     }: IBuyRequestBody = req.body;
-
+    //fetch userid from middleware
     const userId = req.user?._id;
     if (!userId) {
       throw new ApiErrorHandling(

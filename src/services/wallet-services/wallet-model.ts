@@ -1,18 +1,14 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
-interface ICurrencyAmount {
-  currency: string;
-  balance: number;
-}
-
 export interface IWallet extends Document {
   user: Types.ObjectId;
+  asset: string;
+  balance: number;
   createdAt?: Date;
   updatedAt?: Date;
-  currencyAmount: ICurrencyAmount[];
 }
 
-const walletSchema = new Schema<IWallet>(
+const walletSchema = new mongoose.Schema<IWallet>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -20,23 +16,17 @@ const walletSchema = new Schema<IWallet>(
       required: true,
       unique: true,
     },
-    currencyAmount: [
-      {
-        currency: {
-          type: String,
-          required: true,
-          uppercase: true,
-        },
-        balance: {
-          type: Number,
-          default: 0,
-        },
-      },
-    ],
+    asset: {
+      type: String, // BTC, ETH, USDT
+      required: true,
+    },
+    balance: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const Wallet = mongoose.model<IWallet>("Wallet", walletSchema);
