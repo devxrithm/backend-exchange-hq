@@ -1,13 +1,12 @@
-import redisConnection from "../../../config/redis-config/redis-connection";
-import { AuthRequest } from "../../../middleware/jwt-verify";
 import {
   ApiErrorHandling,
   ApiResponse,
+  AuthRequest,
   HttpCodes,
-} from "../../../utils/utils-export";
-
-import { Response } from "express";
-import { Order } from "../order-model";
+  Order,
+  Redis,
+  Response,
+} from "./orders-controller";
 
 export const openPosition = async (
   _req: AuthRequest,
@@ -19,7 +18,7 @@ export const openPosition = async (
     //   throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
     // }
 
-    const redis = redisConnection.getClient();
+    const redis = Redis.getClient();
 
     const orderIds = await redis.zRange(
       "user:openOrders:696f330085f796568d1339ea",

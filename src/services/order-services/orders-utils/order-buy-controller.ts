@@ -5,9 +5,9 @@ import {
   IBuyRequestBody,
   Wallet,
   Response,
-  redis,
+  Redis,
   ApiResponse,
-  kafka,
+  Kafka,
 } from "./orders-controller";
 import crypto from "node:crypto";
 
@@ -68,11 +68,10 @@ export const buyOrder = async (
       orderQuantity: orderQuantity.toString(),
     };
     //push to kafka
-    await kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+    await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 
     //push to redis
-    redis
-      .getClient()
+    Redis.getClient()
       .multi()
       .hSet(`orderID:${uuid}`, buyOrder)
       .expire(`orderID:${uuid}`, 60)

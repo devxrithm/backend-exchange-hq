@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { verifyJWT } from "../../middleware/jwt-verify";
-import { buyOrder, openPosition, sellOrder } from "./orders-controller";
+import {
+  buyOrder,
+  openPosition,
+  sellOrder,
+} from "./orders-utils/orders-controller";
 
 const orderRoutes: Router = Router();
 

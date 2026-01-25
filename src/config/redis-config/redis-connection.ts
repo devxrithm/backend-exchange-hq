@@ -36,5 +36,5 @@ class RedisConnection {
   }
 }
 
-const redis = new RedisConnection();
-export { redis };
+const Redis = new RedisConnection();
+export { Redis };

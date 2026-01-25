@@ -30,5 +30,5 @@ class KafkaProducer {
   }
 }
 
-const kafka = new KafkaProducer();
-export { kafka };
+const Kafka = new KafkaProducer();
+export { Kafka };

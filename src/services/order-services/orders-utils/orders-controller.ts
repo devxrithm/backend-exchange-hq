@@ -1,8 +1,11 @@
-export { redis } from "../../../config/redis-config/redis-connection";
-export { kafka } from "../../kafka-services/kafka-producer";
+export { openPosition } from "./order-open-controller";
+export { sellOrder } from "./order-sell-controller";
+export { buyOrder } from "./order-buy-controller";
 
-export { Response } from "express";
+export { Redis } from "../../../config/redis-config/redis-connection";
+export { Kafka } from "../../kafka-services/kafka-producer";
 export { Order } from "../order-model";
+export { Response } from "express";
 export { Wallet } from "../../wallet-services/wallet-model";
 export {
   ApiErrorHandling,

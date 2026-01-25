@@ -1,5 +1,3 @@
-import redisConnection from "../../../config/redis-config/redis-connection";
-import kafkaProducer from "../../kafka-services/kafka-producer";
 import {
   ApiErrorHandling,
   ApiResponse,
@@ -8,7 +6,9 @@ import {
   ISellRequestBody,
   Wallet,
   Response,
-} from "../orders-controller";
+  Kafka,
+  Redis,
+} from "./orders-controller";
 import crypto from "node:crypto";
 
 export const sellOrder = async (
@@ -72,17 +72,12 @@ export const sellOrder = async (
     };
 
     //push to kafka
-    await kafkaProducer.sendToConsumer(
-      "orders-detail",
-      JSON.stringify(sellOrder),
-    );
+    await Kafka.sendToConsumer("orders-detail", JSON.stringify(sellOrder));
 
-    await redisConnection
-      .getClient()
-      ?.json.set(`orderID:${uuid}`, "$", sellOrder);
+    await Redis.getClient()?.json.set(`orderID:${uuid}`, "$", sellOrder);
     console.log("order saved to redis");
 
-    await redisConnection.getClient()?.sAdd(`userOrders:${userId}`, uuid);
+    await Redis.getClient()?.sAdd(`userOrders:${userId}`, uuid);
     // Wallet update
     token.balance -= orderQuantity;
     usdt.balance += totalAmount;
