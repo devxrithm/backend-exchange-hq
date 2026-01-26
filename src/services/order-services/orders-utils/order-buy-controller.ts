@@ -54,7 +54,7 @@ export const buyOrder = async (
         user: userId.toString(),
         orderId: uuid,
         orderSide,
-        currencyPair,
+        currencyPair: currencyPair.toLowerCase(),
         orderType,
         entryPrice: entryPrice.toString(),
         positionStatus,
@@ -83,7 +83,7 @@ export const buyOrder = async (
     // if (!walletToken) {
     //   await Wallet.create({
     //     user: userId,
-    //     asset: currencyPair,
+    //     asset: currencyPair.toLowerCase(),
     //     balance: orderQuantity,
     //   });
     // } else {
