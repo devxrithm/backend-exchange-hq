@@ -18,7 +18,6 @@ const walletSchema = new mongoose.Schema<IWallet>(
     asset: {
       type: String, // BTC, ETH, USDT
       required: true,
-      unique: true,
     },
     balance: {
       type: Number,

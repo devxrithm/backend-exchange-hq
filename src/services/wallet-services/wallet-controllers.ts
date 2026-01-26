@@ -80,7 +80,7 @@ const createWallet = async (req: AuthRequest, res: Response) => {
 
     const userWallet = await Wallet.create({
       user: userid,
-      asset: "usdt",
+      asset: "USDT",
       balance: 10000,
     });
 
@@ -94,6 +94,7 @@ const createWallet = async (req: AuthRequest, res: Response) => {
         ),
       );
   } catch (error) {
+    console.log(error);
     if (error instanceof ApiErrorHandling) {
       res
         .status(error.statusCode)

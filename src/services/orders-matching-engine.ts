@@ -14,9 +14,10 @@ export const orderMatchingEngine = async (message: IOrder) => {
   let userQty = orderQuantity;
   const userOrderId = orderId;
 
-  await Redis.getClient().zAdd(`orderbook:${currencyPair}:${orderSide}`, [
-    { score: orderAmount, value: `${orderId}|${orderQuantity}` },
-  ]);
+  await Redis.getClient().zAdd(
+    `orderbook:${currencyPair}:${orderId}:${orderSide}`,
+    [{ score: orderAmount, value: `${currencyPair}|${orderQuantity}` }],
+  );
 
   const key =
     orderSide === "BUY"

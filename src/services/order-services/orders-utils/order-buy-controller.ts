@@ -7,6 +7,7 @@ import {
   Redis,
   ApiResponse,
   Kafka,
+  Wallet,
 } from "./orders-controller";
 import crypto from "node:crypto";
 
@@ -32,15 +33,14 @@ export const buyOrder = async (
         "User not authenticated",
       );
     }
-    //db call
-
     const redisKey = `wallet:${userId}:usdt`;
     const wallet = await Redis.getClient().hmGet(redisKey, [
       "asset",
       "balance",
     ]);
-    const walletBalance = wallet[1];
-    if (wallet) {
+    console.log(wallet, wallet[1] != null);
+    if (wallet[1] != null) {
+      const walletBalance = wallet[1];
       if (orderAmount > Number(walletBalance)) {
         throw new ApiErrorHandling(
           HttpCodes.BAD_REQUEST,
@@ -68,11 +68,52 @@ export const buyOrder = async (
       //push to redis
       Redis.getClient()
         .multi()
-        .hSet(`orderID:${uuid}`, buyOrder)
-        .expire(`orderID:${uuid}`, 60)
-        .sAdd(`user:openOrders:${userId}`, uuid)
+        .hSet(`orderdetail:orderID:${uuid}`, buyOrder)
+        .expire(`orderdetail:orderID:${uuid}`, 5000)
+        .sAdd(`openOrders:userId${userId}`, uuid)
         .exec();
     }
+
+    //fetch from DB
+    const walletDB = await Wallet.findOne({ user: userId, asset: "USDT" });
+    if (!walletDB) {
+      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
+    }
+
+    const orderQuantity = orderAmount / entryPrice;
+
+    const buyOrder = {
+      user: userId.toString(),
+      orderId: uuid,
+      orderSide,
+      currencyPair: currencyPair.toLowerCase(),
+      orderType,
+      entryPrice: entryPrice.toString(),
+      positionStatus,
+      orderAmount: orderAmount.toString(),
+      orderQuantity: orderQuantity.toString(),
+    };
+    console.log("push to kafka");
+    //push to kafka
+    await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+
+    //push to redis
+    Redis.getClient()
+      .multi()
+      .hSet(`orderdetail:orderID:${uuid}`, buyOrder)
+      .expire(`orderdetail:orderID:${uuid}`, 5000)
+      .sAdd(`openOrders:userId${userId}`, uuid)
+      .exec();
+
+    const responseData = {
+      asset: walletDB?.asset || "",
+      balance: walletDB?.balance?.toString() || "0",
+    };
+    // push to redis
+    await Promise.all([
+      Redis.getClient().hSet(redisKey, responseData),
+      Redis.getClient().expire(redisKey, 5000),
+    ]);
     // const walletFromDb = await Wallet.findOne({ user: userId, asset: "usdt" });
     // Wallet update
     // wallet.balance -= orderAmount;
