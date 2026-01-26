@@ -13,6 +13,6 @@ export const options = {
 };
 
 export default function () {
-  http.get("http://localhost:3000/api/wallet/getuserbalance/BTCUSDT");
+  http.get("http://localhost:3000/api/order/openPositions");
   // sleep(1);
 }

@@ -25,22 +25,20 @@ export const openPosition = async (
       0,
       5,
     );
-
+    // console.log(orderIds);
     if (orderIds.length) {
-      const pipeline = redis.multi();
-      orderIds.forEach((orderId) => {
-        pipeline.hmGet(`orderID:${orderId}`, [
-          "orderId",
-          "orderSide",
-          "orderQuantity",
-          "entryPrice",
-          "positionStatus",
-        ]);
-      });
-      console.time("redis");
-      const result = await pipeline.exec();
-      console.timeEnd("redis");
-
+      const result = await Promise.all(
+        orderIds.map(async (Id) => {
+          const detail = await redis.hmGet(`orderID:${Id}`, [
+            "orderId",
+            "orderSide",
+            "orderQuantity",
+            "entryPrice",
+            "positionStatus",
+          ]);
+          return detail;
+        }),
+      );
       return res
         .status(HttpCodes.OK)
         .json(new ApiResponse(HttpCodes.OK, result, "Live trades from redis"));
@@ -51,11 +49,10 @@ export const openPosition = async (
     });
 
     //push to Redis
-    orders.forEach((order) => {
+    orders.forEach(async (order) => {
       const orderId = order.orderId;
-      redis
-        .multi()
-        .hSet(`orderID:${orderId}`, {
+      await Promise.all([
+        redis.hSet(`orderID:${orderId}`, {
           orderId: order.orderId,
           userId: order.user.toString(),
           currencyPair: order.currencyPair,
@@ -65,14 +62,14 @@ export const openPosition = async (
           orderAmount: order.orderAmount.toString(),
           orderQuantity: order.orderQuantity.toString(),
           positionStatus: order.positionStatus,
-        })
-        .expire(`orderID:${orderId}`, 60)
-        .zAdd(`user:openOrders:${order.user}`, {
+        }),
+        redis.expire(`orderID:${orderId}`, 120),
+        redis.zAdd(`user:openOrders:${order.user}`, {
           score: Number(order.createdAt?.getTime()),
           value: order.orderId,
-        })
-        .expire(`user:openOrders:${order.user}`, 60)
-        .exec();
+        }),
+        redis.expire(`user:openOrders:${order.user}`, 120),
+      ]);
     });
 
     return res
