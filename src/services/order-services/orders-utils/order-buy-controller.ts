@@ -61,6 +61,7 @@ export const buyOrder = async (
         orderAmount: orderAmount.toString(),
         orderQuantity: orderQuantity.toString(),
       };
+      console.log("push to kafka");
       //push to kafka
       await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 

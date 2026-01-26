@@ -1,4 +1,5 @@
 import { Order } from "../order-services/order-model";
+import { orderMatchingEngine } from "../orders-matching-engine";
 import kafkaConsumer from "./kafka-consumer";
 import { Kafka } from "./kafka-producer";
 
@@ -18,13 +19,18 @@ const kafkaConsume = async () => {
     await kafkaConsumer.subscribeToTopic("orders-detail");
 
     await kafkaConsumer.consume(async (message) => {
+      console.log("order matching started");
+      console.log(message);
+      console.log("order matching started");
+      const trades = await orderMatchingEngine(message);
+      console.log("order matching ended");
+      console.log(trades);
       await Order.create(message);
     });
   } catch (error) {
-    await kafkaConsumer.consume(async (message) => {
-      console.log("at error");
-      await Order.create(message);
-    });
+    // await kafkaConsumer.consume(async (message) => {
+    //   await Order.create(message);
+    // });
     console.log(error);
   }
 };
