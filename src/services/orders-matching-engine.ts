@@ -5,7 +5,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
   // for buy order
   const { currencyPair, orderSide, orderQuantity, orderId, entryPrice } =
     message;
-  let userQty = orderQuantity;
+  let userQty = Number(orderQuantity);
   const userOrderId = orderId;
 
   const buyBook = `orderbook:${currencyPair}:BUY`;
@@ -34,8 +34,8 @@ export const orderMatchingEngine = async (message: IOrder) => {
 
     // Price check
     if (
-      (orderSide === "BUY" && bestPrice > entryPrice) ||
-      (orderSide === "SELL" && bestPrice < entryPrice)
+      (orderSide === "BUY" && bestPrice > Number(entryPrice)) ||
+      (orderSide === "SELL" && bestPrice < Number(entryPrice))
     ) {
       break;
     }
@@ -43,7 +43,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
 
     userQty = userQty - tradeQty; //if left again added to redis
     console.log(userQty);
-    
+
     //removed resting order here
     await Redis.getClient().zRem(oppositeBook, order[0]);
 

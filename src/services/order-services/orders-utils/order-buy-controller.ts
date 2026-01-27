@@ -72,6 +72,16 @@ export const buyOrder = async (
         .expire(`orderdetail:orderID:${uuid}`, 5000)
         .sAdd(`openOrders:userId${userId}`, uuid)
         .exec();
+
+      return res
+        .status(HttpCodes.OK)
+        .json(
+          new ApiResponse(
+            HttpCodes.OK,
+            buyOrder,
+            "Trade placed successfully from redis wallet",
+          ),
+        );
     }
 
     //fetch from DB
