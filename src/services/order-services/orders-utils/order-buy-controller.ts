@@ -9,14 +9,15 @@ import {
   Kafka,
   Wallet,
 } from "./orders-controller";
-import crypto from "node:crypto";
+// import crypto from "node:crypto";
+import { v4 as uuidv4 } from "uuid";
 
 export const buyOrder = async (
   req: AuthRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    const uuid = crypto.randomUUID();
+    const uuid = uuidv4();
     const {
       currencyPair,
       orderSide,
@@ -64,7 +65,7 @@ export const buyOrder = async (
       };
       // console.log("push to kafka");
       //push to kafka
-      await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+      Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 
       //push to redis
       await Promise.all([
@@ -105,7 +106,7 @@ export const buyOrder = async (
     };
     // console.log("push to kafka");
     //push to kafka
-    await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+    Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 
     //push to redis
     Redis.getClient()

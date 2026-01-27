@@ -1,24 +1,26 @@
 import cluster from "node:cluster";
 import os from "node:os";
-// import { dirname } from "node:path";
-// import { fileURLToPath } from "node:url";
 import path from "path";
-
-// const __dir = dirname(fileURLToPath(path.resolve("./ca.pem")));
 
 const cpuCount = os.cpus().length;
 
-console.log(`Total number of cpus is ${cpuCount}`);
-console.log(`primary pid${process.pid}`);
+if (cluster.isPrimary) {
+  console.log(`Primary PID ${process.pid}`);
+  console.log(`Total CPUs: ${cpuCount}`);
 
-cluster.setupPrimary({
-  exec: path.resolve("./src/server.ts"),
-});
+  cluster.setupPrimary({
+    exec: path.resolve("./src/server.ts"),
+  });
 
-for (let i = 0; i < cpuCount; i++) {
-  cluster.fork();
+  for (let i = 0; i < cpuCount; i++) {
+    cluster.fork();
+  }
+
+  cluster.on("exit", (worker) => {
+    console.log(`Worker ${worker.process.pid} died, restarting`);
+    cluster.fork();
+  });
+} else {
+  // ❗ NOTHING here
+  // server.ts will run inside workers
 }
-
-cluster.on("exit", () => {
-  cluster.fork();
-});

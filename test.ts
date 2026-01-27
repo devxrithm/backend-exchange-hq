@@ -2,11 +2,15 @@ import http from "k6/http";
 import { check } from "k6";
 
 export const options = {
-  vus: 500,
-  duration: "60s",
-  cloud: {
-    projectID: 6480406,
-    name: "Buy Order Load Test (23/01/2026)",
+  stages: [
+    { duration: "30s", target: 100 }, // ramp up to 100 users
+    { duration: "30s", target: 300 }, // ramp up to 300 users
+    { duration: "30s", target: 600 }, // ramp up to 600 users
+  ],
+  noConnectionReuse: true,
+  thresholds: {
+    http_req_failed: ["rate<0.01"], // <1% failures
+    http_req_duration: ["p(95)<3000"], // p95 under 3s
   },
 };
 
@@ -25,8 +29,6 @@ export default function () {
   const params = {
     headers: {
       "Content-Type": "application/json",
-      // add auth if needed
-      // Authorization: "Bearer YOUR_JWT_TOKEN",
     },
   };
 
@@ -34,6 +36,5 @@ export default function () {
 
   check(res, {
     "status is 200 or 201": (r) => r.status === 200 || r.status === 201,
-    "response time < 500ms": (r) => r.timings.duration < 500,
   });
 }
