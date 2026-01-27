@@ -8,7 +8,8 @@ import {
 
 const orderRoutes: Router = Router();
 
-orderRoutes.post("/buyorder", verifyJWT, buyOrder);
+// orderRoutes.post("/buyorder", verifyJWT, buyOrder);
+orderRoutes.post("/buyorder", buyOrder);
 orderRoutes.post("/sellorder", verifyJWT, sellOrder);
 // orderRoutes.get("/openPositions", verifyJWT, openPosition);
 orderRoutes.get("/openPositions", openPosition);

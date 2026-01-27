@@ -26,7 +26,8 @@ export const buyOrder = async (
       orderAmount,
     }: IBuyRequestBody = req.body;
     //fetch userid from middleware
-    const userId = req.user?._id;
+    // const userId = req.user?._id;
+    const userId = "696f330085f796568d1339ea";
     if (!userId) {
       throw new ApiErrorHandling(
         HttpCodes.UNAUTHORIZED,
@@ -61,17 +62,16 @@ export const buyOrder = async (
         orderAmount: orderAmount.toString(),
         orderQuantity: orderQuantity.toString(),
       };
-      console.log("push to kafka");
+      // console.log("push to kafka");
       //push to kafka
       await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 
       //push to redis
-      Redis.getClient()
-        .multi()
-        .hSet(`orderdetail:orderID:${uuid}`, buyOrder)
-        .expire(`orderdetail:orderID:${uuid}`, 5000)
-        .sAdd(`openOrders:userId${userId}`, uuid)
-        .exec();
+      await Promise.all([
+        Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, buyOrder),
+        Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
+        Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
+      ]);
 
       return res
         .status(HttpCodes.OK)
@@ -103,7 +103,7 @@ export const buyOrder = async (
       orderAmount: orderAmount.toString(),
       orderQuantity: orderQuantity.toString(),
     };
-    console.log("push to kafka");
+    // console.log("push to kafka");
     //push to kafka
     await Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
 
@@ -150,7 +150,7 @@ export const buyOrder = async (
         new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
       );
   } catch (error) {
-    console.log(error);
+    // console.log(error);
 
     if (error instanceof ApiErrorHandling) {
       return res
