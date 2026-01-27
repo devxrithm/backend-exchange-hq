@@ -25,7 +25,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
     if (order?.length === 0) break;
 
     const [counterOrderIdStr, counterQtyStr] = order[0].split("|");
-    const counterOrderId = Number(counterOrderIdStr);
+    const counterOrderId = String(counterOrderIdStr);
     const counterQty = Number(counterQtyStr);
 
     const bestPrice = Number(
@@ -41,8 +41,9 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
     const tradeQty = Math.min(userQty, counterQty);
 
-    userQty -= tradeQty; //if left again added to redis
-
+    userQty = userQty - tradeQty; //if left again added to redis
+    console.log(userQty);
+    
     //removed resting order here
     await Redis.getClient().zRem(oppositeBook, order[0]);
 
@@ -51,7 +52,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
     if (newQty > 0) {
       await Redis.getClient().zAdd(oppositeBook, {
         score: bestPrice,
-        value: `${orderId}|${newQty}`,
+        value: `${counterOrderId}|${newQty}`,
       });
     }
 

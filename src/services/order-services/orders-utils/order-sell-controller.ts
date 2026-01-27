@@ -39,10 +39,10 @@ export const sellOrder = async (
       "asset",
       "balance",
     ]);
-    // console.log(wallet, wallet[1] != null);
+    console.log(wallet, wallet[1] != null);
     if (wallet[1] != null) {
       const walletBalance = wallet[1];
-      if (orderQuantity < Number(walletBalance)) {
+      if (orderQuantity > Number(walletBalance)) {
         throw new ApiErrorHandling(
           HttpCodes.BAD_REQUEST,
           "Insufficient Quantity balance",
@@ -55,7 +55,7 @@ export const sellOrder = async (
         user: userId.toString(),
         orderId: uuid,
         orderSide,
-        currencyPair: currencyPair.toLowerCase(),
+        currencyPair: currencyPair,
         orderType,
         entryPrice: entryPrice.toString(),
         positionStatus,
@@ -90,7 +90,7 @@ export const sellOrder = async (
       user: userId.toString(),
       orderId: uuid,
       orderSide,
-      currencyPair: currencyPair.toLowerCase(),
+      currencyPair: currencyPair,
       orderType,
       entryPrice: entryPrice.toString(),
       positionStatus,

@@ -20,7 +20,7 @@ const kafkaConsume = async () => {
 
     await kafkaConsumer.consume(async (message) => {
       console.log("order matching started");
-      console.log(message);
+      // console.log(message);
       console.log("order matching started");
       const trades = await orderMatchingEngine(message);
       console.log("order matching ended");

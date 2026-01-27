@@ -38,7 +38,7 @@ export const buyOrder = async (
       "asset",
       "balance",
     ]);
-    console.log(wallet, wallet[1] != null);
+
     if (wallet[1] != null) {
       const walletBalance = wallet[1];
       if (orderAmount > Number(walletBalance)) {
@@ -54,7 +54,7 @@ export const buyOrder = async (
         user: userId.toString(),
         orderId: uuid,
         orderSide,
-        currencyPair: currencyPair.toLowerCase(),
+        currencyPair: currencyPair,
         orderType,
         entryPrice: entryPrice.toString(),
         positionStatus,
@@ -86,7 +86,7 @@ export const buyOrder = async (
       user: userId.toString(),
       orderId: uuid,
       orderSide,
-      currencyPair: currencyPair.toLowerCase(),
+      currencyPair: currencyPair,
       orderType,
       entryPrice: entryPrice.toString(),
       positionStatus,
