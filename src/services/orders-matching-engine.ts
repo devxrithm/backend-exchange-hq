@@ -3,43 +3,34 @@ import { IOrder } from "./order-services/order-model";
 
 export const orderMatchingEngine = async (message: IOrder) => {
   // for buy order
-  const {
-    currencyPair,
-    orderSide,
-    orderAmount,
-    orderQuantity,
-    orderId,
-    entryPrice,
-  } = message;
+  const { currencyPair, orderSide, orderQuantity, orderId, entryPrice } =
+    message;
   let userQty = orderQuantity;
   const userOrderId = orderId;
 
-  await Redis.getClient().zAdd(
-    `orderbook:${currencyPair}:${orderId}:${orderSide}`,
-    [{ score: orderAmount, value: `${currencyPair}|${orderQuantity}` }],
-  );
+  const buyBook = `orderbook:${currencyPair}:BUY`;
+  const sellBook = `orderbook:${currencyPair}:SELL`;
 
-  const key =
-    orderSide === "BUY"
-      ? `orderbook:${currencyPair}:SELL`
-      : `orderbook:${currencyPair}:BUY`;
+  const userBook = orderSide === "BUY" ? buyBook : sellBook;
+  const oppositeBook = orderSide === "BUY" ? sellBook : buyBook;
 
   const trades = [];
 
   while (userQty > 0) {
     const order =
       orderSide === "BUY"
-        ? await Redis.getClient().zRange(key, 0, 0)
-        : await Redis.getClient().zRange(key, 0, 0, { REV: true });
+        ? await Redis.getClient().zRange(oppositeBook, 0, 0)
+        : await Redis.getClient().zRange(oppositeBook, 0, 0, { REV: true });
 
     if (order?.length === 0) break;
 
-    const [orderId, orderQuantity] = order[0].split("|");
+    const [counterOrderIdStr, counterQtyStr] = order[0].split("|");
+    const counterOrderId = Number(counterOrderIdStr);
+    const counterQty = Number(counterQtyStr);
 
-    const counterQty = Number(orderQuantity);
-    const counterOrderId = Number(orderId);
-
-    const bestPrice = Number(Redis.getClient().zScore(key, order[0])); //seller price due to buy order
+    const bestPrice = Number(
+      await Redis.getClient().zScore(oppositeBook, order[0]),
+    );
 
     // Price check
     if (
@@ -50,14 +41,15 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
     const tradeQty = Math.min(userQty, counterQty);
 
-    userQty -= tradeQty;
+    userQty -= tradeQty; //if left again added to redis
 
-    await Redis.getClient().zRem(key, order[0]);
+    //removed resting order here
+    await Redis.getClient().zRem(oppositeBook, order[0]);
 
     const newQty = counterQty - tradeQty;
 
     if (newQty > 0) {
-      await Redis.getClient().zAdd(key, {
+      await Redis.getClient().zAdd(oppositeBook, {
         score: bestPrice,
         value: `${orderId}|${newQty}`,
       });
@@ -74,5 +66,12 @@ export const orderMatchingEngine = async (message: IOrder) => {
     trades.push(trade);
   }
 
+  //only saved for resting order here
+  if (userQty > 0) {
+    await Redis.getClient().zAdd(userBook, {
+      score: entryPrice,
+      value: `${userOrderId}|${userQty}`,
+    });
+  }
   return trades;
 };

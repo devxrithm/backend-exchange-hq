@@ -25,7 +25,6 @@ const orderSchema = new Schema<IOrder>(
     orderId: {
       type: String,
       required: true,
-      unique: true,
     },
     currencyPair: {
       type: String,
