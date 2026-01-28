@@ -9,7 +9,6 @@ import {
   Kafka,
   Wallet,
 } from "./orders-controller";
-// import crypto from "node:crypto";
 import { v4 as uuidv4 } from "uuid";
 
 export const buyOrder = async (
@@ -104,55 +103,26 @@ export const buyOrder = async (
       orderAmount: orderAmount.toString(),
       orderQuantity: orderQuantity.toString(),
     };
-    // console.log("push to kafka");
     //push to kafka
     Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
-
-    //push to redis
-    Redis.getClient()
-      .multi()
-      .hSet(`orderdetail:orderID:${uuid}`, buyOrder)
-      .expire(`orderdetail:orderID:${uuid}`, 5000)
-      .sAdd(`openOrders:userId${userId}`, uuid)
-      .exec();
-
     const responseData = {
       asset: walletDB?.asset || "",
       balance: walletDB?.balance?.toString() || "0",
     };
-    // push to redis
+    //push to redis
     await Promise.all([
+      Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, buyOrder),
+      Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
+      Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
       Redis.getClient().hSet(redisKey, responseData),
       Redis.getClient().expire(redisKey, 5000),
     ]);
-    // const walletFromDb = await Wallet.findOne({ user: userId, asset: "usdt" });
-    // Wallet update
-    // wallet.balance -= orderAmount;
-
-    // const walletToken = await Wallet.findOne({
-    //   user: userId,
-    //   asset: currencyPair,
-    // });
-    // if (!walletToken) {
-    //   await Wallet.create({
-    //     user: userId,
-    //     asset: currencyPair.toLowerCase(),
-    //     balance: orderQuantity,
-    //   });
-    // } else {
-    //   walletToken.balance += orderQuantity;
-    // }
-
-    // await wallet.save();
-
     return res
       .status(HttpCodes.OK)
       .json(
         new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
       );
   } catch (error) {
-    // console.log(error);
-
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

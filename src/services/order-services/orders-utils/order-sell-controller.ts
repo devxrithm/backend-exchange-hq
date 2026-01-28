@@ -9,14 +9,14 @@ import {
   Kafka,
   Redis,
 } from "./orders-controller";
-import crypto from "node:crypto";
+import { v4 as uuidv4 } from "uuid";
 
 export const sellOrder = async (
   req: AuthRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    const uuid = crypto.randomUUID();
+    const uuid = uuidv4();
     const {
       currencyPair,
       orderType,
@@ -68,12 +68,14 @@ export const sellOrder = async (
       await Kafka.sendToConsumer("orders-detail", JSON.stringify(sellOrder));
 
       //push to redis
-      Redis.getClient()
-        .multi()
-        .hSet(`orderdetail:orderID:${uuid}`, sellOrder)
-        .expire(`orderdetail:orderID:${uuid}`, 5000)
-        .sAdd(`openOrders:userId:${userId}`, uuid)
-        .exec();
+      await Promise.all([
+        Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, sellOrder),
+        Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
+        Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
+      ]);
+      return res
+        .status(HttpCodes.OK)
+        .json(new ApiResponse(HttpCodes.OK, sellOrder, "Sell order executed"));
     }
 
     //fetch from DB
@@ -98,24 +100,18 @@ export const sellOrder = async (
       orderQuantity: orderQuantity.toString(),
     };
 
-    console.log("push to kafka");
+    // console.log("push to kafka");
     //push to kafka
     await Kafka.sendToConsumer("orders-detail", JSON.stringify(sellOrder));
-
-    //push to redis
-    Redis.getClient()
-      .multi()
-      .hSet(`orderdetail:orderID:${uuid}`, sellOrder)
-      .expire(`orderdetail:orderID:${uuid}`, 5000)
-      .sAdd(`openOrders:userId:${userId}`, uuid)
-      .exec();
-
     const responseData = {
       asset: walletDB?.asset || "",
       balance: walletDB?.balance?.toString() || "0",
     };
-    // push to redis
+    //push to redis
     await Promise.all([
+      Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, sellOrder),
+      Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
+      Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
       Redis.getClient().hSet(redisKey, responseData),
       Redis.getClient().expire(redisKey, 5000),
     ]);

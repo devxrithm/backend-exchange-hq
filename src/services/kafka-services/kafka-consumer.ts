@@ -34,6 +34,14 @@ class KafkaConsumer {
       },
     });
   }
+
+  async disconnect(): Promise<void> {
+    try {
+      await this.consumer.disconnect();
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
 
 export default new KafkaConsumer();
