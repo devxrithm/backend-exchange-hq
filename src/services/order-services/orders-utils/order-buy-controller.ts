@@ -64,7 +64,11 @@ export const buyOrder = async (
       };
       // console.log("push to kafka");
       //push to kafka
-      Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+      Kafka.sendToConsumer(
+        currencyPair,
+        "orders-detail",
+        JSON.stringify(buyOrder),
+      );
 
       //push to redis
       await Promise.all([
@@ -104,7 +108,11 @@ export const buyOrder = async (
       orderQuantity: orderQuantity.toString(),
     };
     //push to kafka
-    Kafka.sendToConsumer("orders-detail", JSON.stringify(buyOrder));
+    Kafka.sendToConsumer(
+      currencyPair,
+      "orders-detail",
+      JSON.stringify(buyOrder),
+    );
     const responseData = {
       asset: walletDB?.asset || "",
       balance: walletDB?.balance?.toString() || "0",

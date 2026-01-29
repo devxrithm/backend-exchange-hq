@@ -25,7 +25,7 @@ const kafkaConsume = async () => {
     //   // const trades = await orderMatchingEngine(message);
     //   // console.log("order matching ended");
     //   // console.log(trades);
-    //   // await Order.create(message);
+    //   await Order.create(message);
     // });
   } catch (error) {
     // await kafkaConsumer.consume(async (message) => {

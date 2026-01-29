@@ -1,27 +1,47 @@
 import http from "k6/http";
-import { check } from "k6";
+import { check, sleep } from "k6";
+
+// Pool of trading pairs
+const PAIRS = [
+  "BTCUSDT",
+  "ETHUSDT",
+  "SOLUSDT",
+  "BNBUSDT",
+  "XRPUSDT",
+  "ADAUSDT",
+  "DOGEUSDT",
+];
 
 export const options = {
-  stages: [
-    { duration: "30s", target: 100 }, // ramp up to 100 users
-    { duration: "30s", target: 300 }, // ramp up to 300 users
-    { duration: "30s", target: 600 }, // ramp up to 600 users
-  ],
+  vus: 500,
+  duration: "60s",
   noConnectionReuse: true,
   thresholds: {
-    http_req_failed: ["rate<0.01"], // <1% failures
-    http_req_duration: ["p(95)<3000"], // p95 under 3s
+    http_req_failed: ["rate<0.01"],
+    http_req_duration: ["p(95)<3000"],
   },
 };
+
+function randomPair() {
+  return PAIRS[Math.floor(Math.random() * PAIRS.length)];
+}
+
+function randomSide() {
+  return Math.random() > 0.5 ? "BUY" : "SELL";
+}
+
+function randomPrice() {
+  return 42000 + Math.floor(Math.random() * 2000);
+}
 
 export default function () {
   const url = "http://localhost:3000/api/order/buyorder";
 
   const payload = JSON.stringify({
-    currencyPair: "BTCUSDT",
-    orderSide: "BUY",
+    currencyPair: randomPair(), // 🔥 random partition key
+    orderSide: randomSide(),
     orderType: "Market",
-    entryPrice: 43000,
+    entryPrice: randomPrice(),
     positionStatus: "Pending",
     orderAmount: 0.01,
   });
@@ -37,4 +57,7 @@ export default function () {
   check(res, {
     "status is 200 or 201": (r) => r.status === 200 || r.status === 201,
   });
+
+  // small pause to simulate real user think-time
+  sleep(0.1);
 }
