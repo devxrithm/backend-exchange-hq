@@ -11,7 +11,8 @@ class KafkaProducer {
 
   constructor() {
     this.producer = kafkaConfig.getClient().producer({
-      maxInFlightRequests: 5,
+      idempotent: false,
+      maxInFlightRequests: 1,
       allowAutoTopicCreation: false,
       retry: {
         retries: 5,
@@ -29,19 +30,7 @@ class KafkaProducer {
       console.log(error);
     }
   }
-  async createTopic() {
-    console.log("Creating Topic [rider-updates]");
-    await this.admin.createTopics({
-      topics: [
-        {
-          topic: "orders-detail",
-          numPartitions: 2,
-          replicationFactor: 1,
-        },
-      ],
-    });
-    console.log("Topic Created Success [rider-updates]");
-  }
+
   async sendToConsumer(
     key: string,
     topic: string,
@@ -56,9 +45,9 @@ class KafkaProducer {
             value: message,
           },
         ],
-        acks: 1,
         compression: CompressionTypes.Snappy,
         timeout: 30000,
+        acks: -1,
       });
     } catch (error) {
       console.log(error);
