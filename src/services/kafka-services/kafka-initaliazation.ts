@@ -19,13 +19,16 @@ const kafkaConsume = async () => {
     await kafkaConsumer.subscribeToTopic("orders-detail");
 
     // await kafkaConsumer.consume(async (message) => {
+    //   // if (message.length > 100) {
+    //   //   await Order.create(message);
+    //   // }
+
     //   // console.log("order matching started");
     //   // console.log(message);
     //   // console.log("order matching started");
     //   // const trades = await orderMatchingEngine(message);
     //   // console.log("order matching ended");
     //   // console.log(trades);
-    //   await Order.create(message);
     // });
   } catch (error) {
     // await kafkaConsumer.consume(async (message) => {

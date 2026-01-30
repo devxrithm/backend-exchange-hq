@@ -12,10 +12,11 @@ class KafkaProducer {
   constructor() {
     this.producer = kafkaConfig.getClient().producer({
       idempotent: false,
-      maxInFlightRequests: 1,
+      maxInFlightRequests: 5,
       allowAutoTopicCreation: false,
       retry: {
-        retries: 5,
+        retries: 3,
+        maxRetryTime: 3000,
       },
     });
     this.admin = kafkaConfig.getClient().admin();
@@ -31,13 +32,9 @@ class KafkaProducer {
     }
   }
 
-  async sendToConsumer(
-    key: string,
-    topic: string,
-    message: string,
-  ): Promise<void> {
+  sendToConsumer(key: string, topic: string, message: string): void {
     try {
-      await this.producer.send({
+      this.producer.send({
         topic,
         messages: [
           {
@@ -46,8 +43,8 @@ class KafkaProducer {
           },
         ],
         compression: CompressionTypes.Snappy,
-        timeout: 30000,
-        acks: -1,
+        timeout: 5000,
+        acks: 0,
       });
     } catch (error) {
       console.log(error);

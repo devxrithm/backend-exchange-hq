@@ -16,6 +16,7 @@ class RedisConnection {
         socket: {
           host: "redis-15109.crce179.ap-south-1-1.ec2.cloud.redislabs.com",
           port: 15109,
+          connectTimeout: 10000,
         },
       });
       this.redis.on("error", (err: unknown) =>

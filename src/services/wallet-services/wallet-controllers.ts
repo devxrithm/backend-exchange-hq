@@ -120,38 +120,34 @@ const getUserBalance = async (req: AuthRequest, res: Response) => {
     if (!userid) {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }
-
     const asset = req.params.asset;
-    const redis = Redis.getClient();
-    const redisKey = `wallet:${userid}:${asset}`;
-
-    const cached = await redis.hmGet(redisKey, ["asset", "balance"]);
-    if (cached[0]) {
+    const redisKey = `wallet:${userid}:${asset}:balance`;
+    console.time("redis cache");
+    const cached = await Redis.getClient().get(redisKey);
+    console.timeEnd("redis cache");
+    if (cached) {
       return res
         .status(200)
         .json(new ApiResponse(200, cached, "wallet balance (cache)"));
     }
 
-    const wallet = await Wallet.findOne({ user: userid, asset });
+    const wallet = await Wallet.findOne({ user: userid, asset }).lean();
     if (!wallet) {
       throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallet not found");
     }
 
-    const responseData = {
-      asset: wallet.asset,
-      balance: wallet.balance.toString(),
-    };
-
+    const walletBalance = wallet.balance;
     // push to redis
-    await Promise.all([
-      Redis.getClient().hSet(redisKey, responseData),
-      Redis.getClient().expire(redisKey, 600),
-    ]);
+    await Redis.getClient().set(redisKey, walletBalance);
 
     return res
       .status(HttpCodes.OK)
       .json(
-        new ApiResponse(HttpCodes.OK, { responseData }, "user updated balance"),
+        new ApiResponse(
+          HttpCodes.OK,
+          { walletBalance },
+          "user updated balance",
+        ),
       );
   } catch (error) {
     if (error instanceof ApiErrorHandling) {

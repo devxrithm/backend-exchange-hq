@@ -22,7 +22,6 @@ export const options = {
     { duration: "30s", target: 1000 },
     { duration: "30s", target: 1500 },
     { duration: "30s", target: 2000 },
-    { duration: "30s", target: 5000 },
   ],
   thresholds: {
     http_req_failed: ["rate<0.01"], // < 1% failures

@@ -25,6 +25,7 @@ export const buyOrder = async (
       positionStatus,
       orderAmount,
     }: IBuyRequestBody = req.body;
+
     //fetch userid from middleware
     // const userId = req.user?._id;
     const userId = "696f330085f796568d1339ea";
@@ -34,68 +35,34 @@ export const buyOrder = async (
         "User not authenticated",
       );
     }
-    const redisKey = `wallet:${userId}:usdt`;
-    const wallet = await Redis.getClient().hmGet(redisKey, [
-      "asset",
-      "balance",
-    ]);
-
-    if (wallet[1] != null) {
-      const walletBalance = wallet[1];
-      if (orderAmount > Number(walletBalance)) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "Insufficient USDT balance",
-        );
-      }
-
-      const orderQuantity = orderAmount / entryPrice;
-
-      const buyOrder = {
-        user: userId.toString(),
-        orderId: uuid,
-        orderSide,
-        currencyPair: currencyPair,
-        orderType,
-        entryPrice: entryPrice.toString(),
-        positionStatus,
-        orderAmount: orderAmount.toString(),
-        orderQuantity: orderQuantity.toString(),
-      };
-      // console.log("push to kafka");
-      //push to kafka
-      Kafka.sendToConsumer(
-        currencyPair,
-        "orders-detail",
-        JSON.stringify(buyOrder),
-      );
-
-      //push to redis
-      await Promise.all([
-        Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, buyOrder),
-        Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
-        Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
-      ]);
-
-      return res
-        .status(HttpCodes.OK)
-        .json(
-          new ApiResponse(
-            HttpCodes.OK,
-            buyOrder,
-            "Trade placed successfully from redis wallet",
-          ),
-        );
-    }
-
-    //fetch from DB
-    const walletDB = await Wallet.findOne({ user: userId, asset: "USDT" });
-    if (!walletDB) {
-      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
-    }
-
+    //calculate qty so that it can use as globally
     const orderQuantity = orderAmount / entryPrice;
 
+    const redisKey = `wallet:${userId}:usdt:balance`;
+    const wallet = await Redis.getClient().get(redisKey);
+
+    let walletBalance = Number(wallet);
+    // console.log(walletBalance);
+    if (walletBalance === 0) {
+      const walletDB = await Wallet.findOne({
+        user: userId,
+        asset: "USDT",
+      }).lean();
+      if (!walletDB) {
+        throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
+      }
+
+      walletBalance = Number(walletDB.balance);
+      //push cached wallet to redis
+      await Redis.getClient().set(redisKey, walletBalance);
+    }
+
+    if (orderAmount > walletBalance) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "Insufficient USDT balance",
+      );
+    }
     const buyOrder = {
       user: userId.toString(),
       orderId: uuid,
@@ -107,24 +74,30 @@ export const buyOrder = async (
       orderAmount: orderAmount.toString(),
       orderQuantity: orderQuantity.toString(),
     };
+
     //push to kafka
+    // console.time("kafka-send");
     Kafka.sendToConsumer(
       currencyPair,
       "orders-detail",
       JSON.stringify(buyOrder),
     );
-    const responseData = {
-      asset: walletDB?.asset || "",
-      balance: walletDB?.balance?.toString() || "0",
-    };
+    // console.timeEnd("kafka-send");
+
     //push to redis
-    await Promise.all([
-      Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, buyOrder),
-      Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
-      Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
-      Redis.getClient().hSet(redisKey, responseData),
-      Redis.getClient().expire(redisKey, 5000),
-    ]);
+    // console.time("redis-pipeline");
+
+    const pipeline = Redis.getClient().multi();
+    pipeline.hSetEx(`orderdetail:orderID:${uuid}`, buyOrder, {
+      expiration: {
+        type: "EX",
+        value: 5000,
+      },
+    });
+    pipeline.sAdd(`openOrders:userId${userId}`, uuid);
+    await pipeline.exec();
+    // console.timeEnd("redis-pipeline");
+
     return res
       .status(HttpCodes.OK)
       .json(
