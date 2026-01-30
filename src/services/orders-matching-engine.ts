@@ -1,10 +1,11 @@
 import { Redis } from "../config/redis-config/redis-connection";
-import { IOrder } from "./order-services/order-model";
+import { IOrder } from "./order-services/place-orders/order-model";
 
 export const orderMatchingEngine = async (message: IOrder) => {
   // for buy order
-  const { currencyPair, orderSide, orderQuantity, orderId, entryPrice } =
+  const { user, currencyPair, orderSide, orderQuantity, orderId, entryPrice } =
     message;
+  const id = user;
   let userQty = Number(orderQuantity);
   const userOrderId = orderId;
 
@@ -24,7 +25,8 @@ export const orderMatchingEngine = async (message: IOrder) => {
 
     if (order?.length === 0) break;
 
-    const [counterOrderIdStr, counterQtyStr] = order[0].split("|");
+    const [counterUserId, counterOrderIdStr, counterQtyStr] =
+      order[0].split("|");
     const counterOrderId = String(counterOrderIdStr);
     const counterQty = Number(counterQtyStr);
 
@@ -39,15 +41,15 @@ export const orderMatchingEngine = async (message: IOrder) => {
     ) {
       break;
     }
-    const tradeQty = Math.min(userQty, counterQty);
+    const tradedQuantity = Math.min(userQty, counterQty);
 
-    userQty = userQty - tradeQty; //if left again added to redis
+    userQty = userQty - tradedQuantity; //if left again added to redis
     // console.log(userQty);
 
     //removed resting order here
     await Redis.getClient().zRem(oppositeBook, order[0]);
 
-    const newQty = counterQty - tradeQty;
+    const newQty = counterQty - tradedQuantity;
 
     if (newQty > 0) {
       await Redis.getClient().zAdd(oppositeBook, {
@@ -57,11 +59,16 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
 
     const trade = {
-      symbol: currencyPair,
-      bestPrice,
-      quantity: tradeQty,
+      buyerId: orderSide === "BUY" ? id : counterUserId,
+      sellerId: orderSide === "SELL" ? id : counterUserId,
       buyOrderId: orderSide === "BUY" ? userOrderId : counterOrderId,
       sellOrderId: orderSide === "SELL" ? userOrderId : counterOrderId,
+      currencyPair,
+      orderType: "Market",
+      status: newQty === 0 ? "Filled" : "Partially Filled",
+      tradedQuantity,
+      executionPrice: bestPrice,
+      
     };
 
     trades.push(trade);
@@ -71,7 +78,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
   if (userQty > 0) {
     await Redis.getClient().zAdd(userBook, {
       score: entryPrice,
-      value: `${userOrderId}|${userQty}`,
+      value: `${id}|${userOrderId}|${userQty}`,
     });
   }
   return trades;

@@ -1,14 +1,14 @@
 import mongoose, { Schema, Document, Types, Model } from "mongoose";
 
 export interface IOrderHistory extends Document {
-  buyerID: Types.ObjectId;
-  sellerID: Types.ObjectId;
+  buyerId: Types.ObjectId;
+  sellerId: Types.ObjectId;
   buyerOrderId: string;
   sellerOrderId: string;
   currencyPair: string;
-  orderAmount: number;
   orderType: string;
-  orderSide: string;
+  buyerOrderSide: string;
+  sellerOrderSide: string;
   tradedQuantity: number;
   executionPrice: number;
   status: string;
@@ -19,12 +19,12 @@ export interface IOrderHistory extends Document {
 
 const orderHistorySchema = new Schema<IOrderHistory>(
   {
-    buyerID: {
+    buyerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    sellerID: {
+    sellerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -47,15 +47,16 @@ const orderHistorySchema = new Schema<IOrderHistory>(
       type: Number,
       required: true,
     },
-    orderAmount: {
-      type: Number,
-      required: true,
-    },
     executionPrice: {
       type: Number,
       required: true,
     },
-    orderSide: {
+    buyerOrderSide: {
+      type: String,
+      enum: ["BUY", "SELL"],
+      required: true,
+    },
+    sellerOrderSide: {
       type: String,
       enum: ["BUY", "SELL"],
       required: true,

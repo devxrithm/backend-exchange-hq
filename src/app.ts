@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import { authRoutes } from "./services/auth-services/auth-routes";
 import { walletRoutes } from "./services/wallet-services/wallet-routes";
 import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
-import { orderRoutes } from "./services/order-services/order-routes";
+import { orderRoutes } from "./services/order-services/place-orders/order-routes";
 import { redisInit } from "./config/redis-config/redis-initialisatio";
 
 dotenv.config({

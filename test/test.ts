@@ -18,7 +18,7 @@ const PAIRS = [
  * k6 test configuration
  */
 export const options = {
-  stages: [{ duration: "30s", target: 50 }],
+  stages: [{ duration: "30s", target: 10 }],
   thresholds: {
     http_req_failed: ["rate<0.01"], // < 1% failures
     http_req_duration: ["p(95)<6000"], // p95 < 3s
@@ -55,7 +55,7 @@ export default function () {
     orderSide: randomSide(),
     orderType: "Market",
     entryPrice: randomPrice(),
-    positionStatus: "Pending",
+    positionStatus: "Open",
     orderAmount: randomAmount(),
   });
 

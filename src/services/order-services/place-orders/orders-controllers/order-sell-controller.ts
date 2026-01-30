@@ -8,7 +8,7 @@ import {
   Response,
   Kafka,
   Redis,
-} from "./orders-controller";
+} from "./export";
 import { v4 as uuidv4 } from "uuid";
 
 export const sellOrder = async (
@@ -85,7 +85,7 @@ export const sellOrder = async (
     );
 
     //push to redis
-    const pipeline =  Redis.getClient().multi();
+    const pipeline = Redis.getClient().multi();
     pipeline.hSetEx(`orderdetail:orderID:${uuid}`, sellOrder, {
       expiration: {
         type: "EX",
