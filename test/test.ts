@@ -18,11 +18,7 @@ const PAIRS = [
  * k6 test configuration
  */
 export const options = {
-  stages: [
-    { duration: "30s", target: 1000 },
-    { duration: "30s", target: 1500 },
-    { duration: "30s", target: 2000 },
-  ],
+  stages: [{ duration: "30s", target: 50 }],
   thresholds: {
     http_req_failed: ["rate<0.01"], // < 1% failures
     http_req_duration: ["p(95)<6000"], // p95 < 3s

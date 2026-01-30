@@ -26,7 +26,8 @@ export const sellOrder = async (
       orderQuantity,
     }: ISellRequestBody = req.body;
     // const asset = req.params.asset;
-    const userId = req.user?._id;
+    // const userId = req.user?._id;
+    const userId = "697735168a96610da52cf73e";
 
     if (!userId) {
       throw new ApiErrorHandling(
@@ -36,17 +37,18 @@ export const sellOrder = async (
     }
     const totalAmount = orderQuantity * entryPrice;
 
-    const redisKey = `wallet:${userId}:${currencyPair}:balance`;
+    const redisKey = `wallet:${userId}:ETHUSDT:balance`;
     const wallet = await Redis.getClient().get(redisKey);
 
     let walletBalance = Number(wallet);
-
     if (walletBalance === 0) {
       //fetch from DB
+      // console.time("db-fetch");
       const walletDB = await Wallet.findOne({
         user: userId,
         asset: currencyPair,
-      });
+      }).lean();
+      // console.timeEnd("db-fetch");
       if (!walletDB) {
         throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
       }
@@ -54,8 +56,9 @@ export const sellOrder = async (
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
       await Redis.getClient().set(redisKey, walletBalance);
+      console.log("from db");
     }
-   
+
     if (orderQuantity > walletBalance) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
@@ -82,7 +85,7 @@ export const sellOrder = async (
     );
 
     //push to redis
-    const pipeline = Redis.getClient().multi();
+    const pipeline =  Redis.getClient().multi();
     pipeline.hSetEx(`orderdetail:orderID:${uuid}`, sellOrder, {
       expiration: {
         type: "EX",

@@ -116,15 +116,15 @@ const createWallet = async (req: AuthRequest, res: Response) => {
 const getUserBalance = async (req: AuthRequest, res: Response) => {
   try {
     // const userid = req.user?._id;
-    const userid = "696f330085f796568d1339ea";
+    const userid = "697735168a96610da52cf73e";
     if (!userid) {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }
     const asset = req.params.asset;
     const redisKey = `wallet:${userid}:${asset}:balance`;
-    console.time("redis cache");
+    // console.time("redis cache");
     const cached = await Redis.getClient().get(redisKey);
-    console.timeEnd("redis cache");
+    // console.timeEnd("redis cache");
     if (cached) {
       return res
         .status(200)

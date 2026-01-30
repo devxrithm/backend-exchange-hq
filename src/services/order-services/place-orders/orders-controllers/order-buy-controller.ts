@@ -38,7 +38,7 @@ export const buyOrder = async (
     //calculate qty so that it can use as globally
     const orderQuantity = orderAmount / entryPrice;
 
-    const redisKey = `wallet:${userId}:usdt:balance`;
+    const redisKey = `wallet:${userId}:USDT:balance`;
     const wallet = await Redis.getClient().get(redisKey);
 
     let walletBalance = Number(wallet);

@@ -13,7 +13,7 @@ export const options = {
 };
 
 export default function () {
-  http.get("http://localhost:3000/api/wallet/getuserbalance/USDT");
+  http.get("http://localhost:3000/api/wallet/getuserbalance/ETHUSDT");
   // sleep(1);
 }
 

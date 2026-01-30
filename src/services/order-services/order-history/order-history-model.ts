@@ -1,0 +1,72 @@
+import mongoose, { Schema, Document, Types, Model } from "mongoose";
+
+export interface IOrder extends Document {
+  user: Types.ObjectId;
+  orderId: string;
+  currencyPair: string;
+  orderQuantity: number;
+  orderAmount: number;
+  orderType: string;
+  orderSide: string;
+  entryPrice: number;
+  positionStatus: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const orderHistorySchema = new Schema<IOrder>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    orderId: {
+      type: String,
+      required: true,
+    },
+    currencyPair: {
+      type: String,
+      required: true,
+    },
+    orderQuantity: {
+      type: Number,
+      required: true,
+    },
+    orderAmount: {
+      type: Number,
+      required: true,
+    },
+    entryPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    orderSide: {
+      type: String,
+      enum: ["BUY", "SELL"],
+      required: true,
+    },
+    orderType: {
+      type: String,
+      enum: ["Market"],
+      required: true,
+    },
+    positionStatus: {
+      type: String,
+      enum: ["Pending", "Filled", "Closed", "Cancelled"],
+      default: "Pending",
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+const orderHistory: Model<IOrder> = mongoose.model<IOrder>(
+  "Order",
+  orderHistorySchema,
+);
+
+export { orderHistory };

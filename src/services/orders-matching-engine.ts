@@ -42,7 +42,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
     const tradeQty = Math.min(userQty, counterQty);
 
     userQty = userQty - tradeQty; //if left again added to redis
-    console.log(userQty);
+    // console.log(userQty);
 
     //removed resting order here
     await Redis.getClient().zRem(oppositeBook, order[0]);

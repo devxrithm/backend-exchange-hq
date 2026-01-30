@@ -4,7 +4,7 @@ import {
   buyOrder,
   openPosition,
   sellOrder,
-} from "./orders-utils/orders-controller";
+} from "./orders-controllers/orders-controller";
 
 const orderRoutes: Router = Router();
 

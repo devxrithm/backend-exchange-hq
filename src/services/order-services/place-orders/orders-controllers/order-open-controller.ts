@@ -1,3 +1,4 @@
+import { IOrder } from "../order-model";
 import {
   ApiErrorHandling,
   ApiResponse,
@@ -28,7 +29,7 @@ export const openPosition = async (
     // console.log(orderIds);
     if (orderIds.length) {
       const result = await Promise.all(
-        orderIds.map(async (Id) => {
+        orderIds.map(async (Id: IOrder) => {
           const detail = await redis.hmGet(`orderID:${Id}`, [
             "orderId",
             "orderSide",

@@ -2,17 +2,17 @@ export { openPosition } from "./order-open-controller";
 export { sellOrder } from "./order-sell-controller";
 export { buyOrder } from "./order-buy-controller";
 
-export { Redis } from "../../../config/redis-config/redis-connection";
-export { Kafka } from "../../kafka-services/kafka-producer";
+export { Redis } from "../../../../config/redis-config/redis-connection";
+export { Kafka } from "../../../kafka-services/kafka-producer";
 export { Order } from "../order-model";
 export { Response } from "express";
-export { Wallet } from "../../wallet-services/wallet-model";
+export { Wallet } from "../../../wallet-services/wallet-model";
 export {
   ApiErrorHandling,
   ApiResponse,
   HttpCodes,
-} from "../../../utils/utils-export";
-export { AuthRequest } from "../../../middleware/jwt-verify";
+} from "../../../../utils/utils-export";
+export { AuthRequest } from "../../../../middleware/jwt-verify";
 
 export interface IBuyRequestBody {
   currencyPair: string;
