@@ -55,8 +55,8 @@ const orderSchema = new Schema<IOrder>(
     },
     positionStatus: {
       type: String,
-      enum: ["Pending", "Filled", "Closed", "Cancelled"],
-      default: "Pending",
+      enum: ["Open", "Filled", "Closed", "Cancelled"],
+      default: "Open",
     },
   },
   {

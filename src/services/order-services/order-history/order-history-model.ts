@@ -1,36 +1,49 @@
 import mongoose, { Schema, Document, Types, Model } from "mongoose";
 
-export interface IOrder extends Document {
-  user: Types.ObjectId;
-  orderId: string;
+export interface IOrderHistory extends Document {
+  buyerID: Types.ObjectId;
+  sellerID: Types.ObjectId;
+  buyerOrderId: string;
+  sellerOrderId: string;
   currencyPair: string;
-  orderQuantity: number;
   orderAmount: number;
   orderType: string;
   orderSide: string;
-  entryPrice: number;
-  positionStatus: string;
-
+  tradedQuantity: number;
+  executionPrice: number;
+  status: string;
+  realizedPnL: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-const orderHistorySchema = new Schema<IOrder>(
+const orderHistorySchema = new Schema<IOrderHistory>(
   {
-    user: {
+    buyerID: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    orderId: {
+    sellerID: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    buyerOrderId: {
       type: String,
       required: true,
+      index: true,
+    },
+    sellerOrderId: {
+      type: String,
+      required: true,
+      index: true,
     },
     currencyPair: {
       type: String,
       required: true,
     },
-    orderQuantity: {
+    tradedQuantity: {
       type: Number,
       required: true,
     },
@@ -38,10 +51,9 @@ const orderHistorySchema = new Schema<IOrder>(
       type: Number,
       required: true,
     },
-    entryPrice: {
+    executionPrice: {
       type: Number,
       required: true,
-      default: 0,
     },
     orderSide: {
       type: String,
@@ -53,10 +65,14 @@ const orderHistorySchema = new Schema<IOrder>(
       enum: ["Market"],
       required: true,
     },
-    positionStatus: {
+    status: {
       type: String,
-      enum: ["Pending", "Filled", "Closed", "Cancelled"],
-      default: "Pending",
+      enum: ["Filled", "Partially Filled"],
+    },
+    realizedPnL: {
+      type: Number,
+      required: true,
+      default: 0,
     },
   },
   {
@@ -64,8 +80,8 @@ const orderHistorySchema = new Schema<IOrder>(
   },
 );
 
-const orderHistory: Model<IOrder> = mongoose.model<IOrder>(
-  "Order",
+const orderHistory: Model<IOrderHistory> = mongoose.model<IOrderHistory>(
+  "OrderHistory",
   orderHistorySchema,
 );
 
