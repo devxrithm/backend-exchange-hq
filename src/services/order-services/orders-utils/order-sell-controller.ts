@@ -34,60 +34,34 @@ export const sellOrder = async (
         "User not authenticated",
       );
     }
-    const redisKey = `wallet:${userId}:${currencyPair}`;
-    const wallet = await Redis.getClient().hmGet(redisKey, [
-      "asset",
-      "balance",
-    ]);
-    console.log(wallet, wallet[1] != null);
-    if (wallet[1] != null) {
-      const walletBalance = wallet[1];
-      if (orderQuantity > Number(walletBalance)) {
-        throw new ApiErrorHandling(
-          HttpCodes.BAD_REQUEST,
-          "Insufficient Quantity balance",
-        );
-      }
-
-      const totalAmount = orderQuantity * entryPrice;
-
-      const sellOrder = {
-        user: userId.toString(),
-        orderId: uuid,
-        orderSide,
-        currencyPair: currencyPair,
-        orderType,
-        entryPrice: entryPrice.toString(),
-        positionStatus,
-        orderAmount: totalAmount.toString(),
-        orderQuantity: orderQuantity.toString(),
-      };
-
-      console.log("push to kafka");
-      //push to kafka
-      await Kafka.sendToConsumer("orders-detail", JSON.stringify(sellOrder));
-
-      //push to redis
-      await Promise.all([
-        Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, sellOrder),
-        Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
-        Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
-      ]);
-      return res
-        .status(HttpCodes.OK)
-        .json(new ApiResponse(HttpCodes.OK, sellOrder, "Sell order executed"));
-    }
-
-    //fetch from DB
-    const walletDB = await Wallet.findOne({
-      user: userId,
-      asset: currencyPair,
-    });
-    if (!walletDB) {
-      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
-    }
     const totalAmount = orderQuantity * entryPrice;
 
+    const redisKey = `wallet:${userId}:${currencyPair}:balance`;
+    const wallet = await Redis.getClient().get(redisKey);
+
+    let walletBalance = Number(wallet);
+
+    if (walletBalance === 0) {
+      //fetch from DB
+      const walletDB = await Wallet.findOne({
+        user: userId,
+        asset: currencyPair,
+      });
+      if (!walletDB) {
+        throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
+      }
+      //push to redis
+      walletBalance = Number(walletDB.balance);
+      //push cached wallet to redis
+      await Redis.getClient().set(redisKey, walletBalance);
+    }
+
+    if (totalAmount > walletBalance) {
+      throw new ApiErrorHandling(
+        HttpCodes.BAD_REQUEST,
+        "Insufficient Token balance",
+      );
+    }
     const sellOrder = {
       user: userId.toString(),
       orderId: uuid,
@@ -100,21 +74,23 @@ export const sellOrder = async (
       orderQuantity: orderQuantity.toString(),
     };
 
-    // console.log("push to kafka");
     //push to kafka
-    await Kafka.sendToConsumer("orders-detail", JSON.stringify(sellOrder));
-    const responseData = {
-      asset: walletDB?.asset || "",
-      balance: walletDB?.balance?.toString() || "0",
-    };
+    Kafka.sendToConsumer(
+      currencyPair,
+      "orders-detail",
+      JSON.stringify(sellOrder),
+    );
+
     //push to redis
-    await Promise.all([
-      Redis.getClient().hSet(`orderdetail:orderID:${uuid}`, sellOrder),
-      Redis.getClient().expire(`orderdetail:orderID:${uuid}`, 5000),
-      Redis.getClient().sAdd(`openOrders:userId${userId}`, uuid),
-      Redis.getClient().hSet(redisKey, responseData),
-      Redis.getClient().expire(redisKey, 5000),
-    ]);
+    const pipeline = Redis.getClient().multi();
+    pipeline.hSetEx(`orderdetail:orderID:${uuid}`, sellOrder, {
+      expiration: {
+        type: "EX",
+        value: 5000,
+      },
+    });
+    pipeline.sAdd(`openOrders:userId${userId}`, uuid);
+    await pipeline.exec();
 
     return res
       .status(HttpCodes.OK)
