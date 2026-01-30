@@ -1,4 +1,5 @@
 import { createClient, RedisClientType } from "redis";
+import { config } from "../env-config/config";
 // import { config } from "../env-config/config";
 
 class RedisConnection {
@@ -12,10 +13,10 @@ class RedisConnection {
     try {
       this.redis = createClient({
         username: "default",
-        password: "mYuGy0agt0qD44s9yUI1jacH3L3IpB6g",
+        password: config.REDIS_PASSWORD,
         socket: {
-          host: "redis-15109.crce179.ap-south-1-1.ec2.cloud.redislabs.com",
-          port: 15109,
+          host: config.REDIS_URI,
+          port: Number(config.REDIS_PORT),
           connectTimeout: 10000,
         },
       });
