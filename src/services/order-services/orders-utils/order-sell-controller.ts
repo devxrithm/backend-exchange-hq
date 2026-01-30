@@ -55,8 +55,8 @@ export const sellOrder = async (
       //push cached wallet to redis
       await Redis.getClient().set(redisKey, walletBalance);
     }
-
-    if (totalAmount > walletBalance) {
+   
+    if (orderQuantity > walletBalance) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
         "Insufficient Token balance",
