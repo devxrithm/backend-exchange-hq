@@ -56,7 +56,7 @@ export const sellOrder = async (
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
       await Redis.getClient().set(redisKey, walletBalance);
-      console.log("from db");
+      
     }
 
     if (orderQuantity > walletBalance) {
@@ -95,7 +95,7 @@ export const sellOrder = async (
       .status(HttpCodes.OK)
       .json(new ApiResponse(HttpCodes.OK, sellOrder, "Sell order executed"));
   } catch (error) {
-    console.log(error);
+   
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

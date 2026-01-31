@@ -26,7 +26,7 @@ export const openPosition = async (
       0,
       5,
     );
-    // console.log(orderIds);
+;
     if (orderIds.length) {
       const result = await Promise.all(
         orderIds.map(async (Id: IOrder) => {
@@ -77,7 +77,6 @@ export const openPosition = async (
       .status(HttpCodes.OK)
       .json(new ApiResponse(HttpCodes.OK, orders, "Live from DB trades"));
   } catch (error) {
-    console.log(error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

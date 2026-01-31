@@ -44,7 +44,7 @@ export const buyOrder = async (
     const wallet = await Redis.getClient().get(redisKey);
     console.timeEnd("redis-get-wallet");
     let walletBalance = Number(wallet);
-    // console.log(walletBalance);
+  
     if (walletBalance === 0) {
       const walletDB = await Wallet.findOne({
         user: userId,
@@ -104,7 +104,6 @@ export const buyOrder = async (
         new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
       );
   } catch (error) {
-    console.log("Error in buyOrder controller:", error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

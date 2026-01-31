@@ -23,12 +23,5 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/order", orderRoutes);
-// app.get("/order", async (_req, res) => {
-//   const order = await Order.find({
-//     orderId: "1331b6ad-2358-47e0-88c6-ef4c3e27e357",
-//   }).populate("user");
 
-//   console.log(order[0].user);
-//   res.status(200).json({ order });
-// });
 export { app };

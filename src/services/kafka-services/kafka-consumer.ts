@@ -1,6 +1,6 @@
 import { Consumer } from "kafkajs";
 import kafkaConfig from "../../config/kafka-config/kafka-config";
-import { IOrder } from "../order-services/order-model";
+import { IOrder } from "../order-services/place-orders/order-model";
 
 class KafkaConsumer {
   private consumer: Consumer;

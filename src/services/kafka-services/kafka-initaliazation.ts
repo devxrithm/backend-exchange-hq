@@ -61,7 +61,6 @@ const bulkInsertion = async () => {
           { $inc: { balance: -order.orderAmount } },
           { new: true },
         );
-        console.log(`wallet:${order.user}:USDT:balance`);
         await Redis.getClient().del(`wallet:${order.user}:USDT:balance`);
       } else {
         await Wallet.findOneAndUpdate(
@@ -78,7 +77,6 @@ const bulkInsertion = async () => {
       }
 
       const trades = await orderMatchingEngine(order);
-      console.log(trades);
       if (trades?.length) {
         await orderHistory.insertMany(trades);
         for (const trade of trades) {
@@ -140,7 +138,7 @@ const bulkInsertion = async () => {
           //   }
         }
       }
-      console.log(`Processed ${batch.length} orders`);
+     
     }
   } catch (error) {
     console.error("Flush failed:", error);

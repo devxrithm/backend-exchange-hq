@@ -73,7 +73,7 @@ const createWallet = async (req: AuthRequest, res: Response) => {
     }
 
     const existingWallet = await Wallet.findOne({ user: userid });
-    console.log(existingWallet);
+    
     if (existingWallet) {
       throw new ApiErrorHandling(HttpCodes.CONFLICT, "wallet already exist");
     }
@@ -94,7 +94,7 @@ const createWallet = async (req: AuthRequest, res: Response) => {
         ),
       );
   } catch (error) {
-    console.log(error);
+    
     if (error instanceof ApiErrorHandling) {
       res
         .status(error.statusCode)

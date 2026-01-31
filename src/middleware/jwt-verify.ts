@@ -30,11 +30,11 @@ const verifyJWT: RequestHandler = async (
     if (!decodedToken) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");
     }
-    // console.log(decodedToken)
+   
     const user = await Auth.findById(decodedToken.UserPayLoad._id).select(
       "-password -refreshToken"
     );
-    // console.log(user)
+    
     if (!user) {
       throw new ApiErrorHandling(401, "Invalid Access Token");
     }

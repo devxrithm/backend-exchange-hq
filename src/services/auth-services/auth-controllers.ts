@@ -15,7 +15,7 @@ const userSignup = async (
     {},
     { fullName: string; userName: string; password: string; email: string }
   >,
-  res: Response
+  res: Response,
 ) => {
   try {
     //checkpoints
@@ -27,13 +27,12 @@ const userSignup = async (
             again check if user registered or not 
             */
     const { fullName, password, email } = req.body;
-    // console.log(`email : ${email} && password : ${password} `)
 
     //check validation if an user is enter a value in field or not
     if (!email?.trim() || !password?.trim() || !fullName?.trim()) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "All fields are required"
+        "All fields are required",
       );
     }
 
@@ -42,7 +41,7 @@ const userSignup = async (
     if (userExist) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "User with email or username already exists"
+        "User with email or username already exists",
       );
     }
 
@@ -54,13 +53,13 @@ const userSignup = async (
     });
 
     const userCreated = await Auth.findById(user._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
 
     if (!userCreated) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "Something went wrong while registering the user"
+        "Something went wrong while registering the user",
       );
     }
 
@@ -73,22 +72,21 @@ const userSignup = async (
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
     }
-    console.log(error);
     return res
       .status(HttpCodes.INTERNAL_SERVER_ERROR)
       .json(
         new ApiResponse(
           HttpCodes.INTERNAL_SERVER_ERROR,
           null,
-          "Internal Server Error error"
-        )
+          "Internal Server Error error",
+        ),
       );
   }
 };
 
 const userLogin = async (
   req: Request<{}, {}, { email: string; password: string }>,
-  res: Response
+  res: Response,
 ) => {
   try {
     /*
@@ -104,7 +102,7 @@ const userLogin = async (
     if (!email || !password) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "user credential required"
+        "user credential required",
       );
     }
 
@@ -113,10 +111,10 @@ const userLogin = async (
     if (!user) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "Invalid user credentials"
+        "Invalid user credentials",
       );
     }
-    // console.log(user._id)
+
     // let userID = await User.findById(email);
     // Compare passwords (assuming password is stored as plain text, but in production use bcrypt to secure more with salt)
     const checkUserPasssowrd = await user.IsPasswordCorrect(password);
@@ -124,16 +122,15 @@ const userLogin = async (
     if (!checkUserPasssowrd) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "Invalid user credentials"
+        "Invalid user credentials",
       );
     }
 
     const { accessToken, refreshToken } = await getAccessAndRefreshToken(
-      String(user._id)
+      String(user._id),
     );
     // const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
     //loggedInUser is optionally because we can also extract user details directly from stored jwt tokens
-    // console.log(accessToken, refreshToken)
 
     // If you want to return a token, generate it here
     res
@@ -158,8 +155,8 @@ const userLogin = async (
         new ApiResponse(
           200,
           { accessToken, refreshToken },
-          "user login successful"
-        )
+          "user login successful",
+        ),
       );
   } catch (error) {
     //we can check if error is instance of ApiError
@@ -175,8 +172,8 @@ const userLogin = async (
           new ApiResponse(
             HttpCodes.INTERNAL_SERVER_ERROR,
             null,
-            "Internal Server Error"
-          )
+            "Internal Server Error",
+          ),
         );
     }
   }
@@ -192,7 +189,7 @@ const userLogout = async (req: AuthRequest, res: Response) => {
     },
     {
       new: true,
-    }
+    },
   );
 
   interface IOptions {
@@ -226,7 +223,7 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
     if (!localToken) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "invaild token kindly check"
+        "invaild token kindly check",
       );
     }
 
@@ -234,22 +231,21 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
     if (!user) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "invaild decoded token"
+        "invaild decoded token",
       );
     }
 
     const storedDBToken = await Auth.findById(user?.UserPayLoad._id);
-    // console.log(storedDBToken.refreshToken)
 
     if (storedDBToken?.refreshToken !== localToken) {
       throw new ApiErrorHandling(
         HttpCodes.BAD_REQUEST,
-        "something wrong with token"
+        "something wrong with token",
       );
     }
 
     const { accessToken, refreshToken } = await getAccessAndRefreshToken(
-      user.UserPayLoad._id
+      user.UserPayLoad._id,
     );
     //why we use this keyword because i am using the constructor to maintain the code readbility so, to access the method define in constructor with this keyword
 
@@ -274,11 +270,10 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
         new ApiResponse(
           200,
           { accessToken, refreshToken },
-          "succesfull refresh tokens"
-        )
+          "succesfull refresh tokens",
+        ),
       );
   } catch (error) {
-    console.log(error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)
@@ -290,8 +285,8 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
           new ApiResponse(
             HttpCodes.INTERNAL_SERVER_ERROR,
             null,
-            "Internal Server Error"
-          )
+            "Internal Server Error",
+          ),
         );
     }
   }

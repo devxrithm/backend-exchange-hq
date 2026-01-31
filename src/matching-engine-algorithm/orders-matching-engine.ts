@@ -18,12 +18,11 @@ export const orderMatchingEngine = async (message: IOrder) => {
   const trades = [];
 
   while (userQty > 0) {
-    console.log("Matching engine iteration with qty:", userQty);
+
     const order =
       orderSide === "BUY"
         ? await Redis.getClient().zPopMin(oppositeBook)
         : await Redis.getClient().zPopMax(oppositeBook);
-    console.log("Opposite order fetched:", order);
 
     if (!order) break;
     const { value, score } = order;
