@@ -39,8 +39,10 @@ export const buyOrder = async (
     const orderQuantity = orderAmount / entryPrice;
 
     const redisKey = `wallet:${userId}:USDT:balance`;
-    const wallet = await Redis.getClient().get(redisKey);
 
+    console.time("redis-get-wallet");
+    const wallet = await Redis.getClient().get(redisKey);
+    console.timeEnd("redis-get-wallet");
     let walletBalance = Number(wallet);
     // console.log(walletBalance);
     if (walletBalance === 0) {
@@ -54,7 +56,9 @@ export const buyOrder = async (
 
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
+      console.time("redis-set-wallet");
       await Redis.getClient().set(redisKey, walletBalance);
+      console.timeEnd("redis-set-wallet");
     }
 
     if (orderAmount > walletBalance) {
@@ -76,27 +80,23 @@ export const buyOrder = async (
     };
 
     //push to kafka
-    // console.time("kafka-send");
+    console.time("kafka-send");
     Kafka.sendToConsumer(
       currencyPair,
       "orders-detail",
       JSON.stringify(buyOrder),
     );
-    // console.timeEnd("kafka-send");
+    console.timeEnd("kafka-send");
 
     //push to redis
-    // console.time("redis-pipeline");
+    console.time("redis-pipeline");
 
     const pipeline = Redis.getClient().multi();
-    pipeline.hSetEx(`orderdetail:orderID:${uuid}`, buyOrder, {
-      expiration: {
-        type: "EX",
-        value: 5000,
-      },
-    });
+    pipeline.hSet(`orderdetail:orderID:${uuid}`, buyOrder);
+    pipeline.expire(`orderdetail:orderID:${uuid}`, 5000); //set expiry of 5000 seconds
     pipeline.sAdd(`openOrders:userId${userId}`, uuid);
     await pipeline.exec();
-    // console.timeEnd("redis-pipeline");
+    console.timeEnd("redis-pipeline");
 
     return res
       .status(HttpCodes.OK)
@@ -104,6 +104,7 @@ export const buyOrder = async (
         new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
       );
   } catch (error) {
+    console.log("Error in buyOrder controller:", error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

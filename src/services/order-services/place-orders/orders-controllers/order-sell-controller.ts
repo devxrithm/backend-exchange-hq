@@ -86,12 +86,8 @@ export const sellOrder = async (
 
     //push to redis
     const pipeline = Redis.getClient().multi();
-    pipeline.hSetEx(`orderdetail:orderID:${uuid}`, sellOrder, {
-      expiration: {
-        type: "EX",
-        value: 5000,
-      },
-    });
+    pipeline.hSet(`orderdetail:orderID:${uuid}`, sellOrder);
+    pipeline.expire(`orderdetail:orderID:${uuid}`, 5000); 
     pipeline.sAdd(`openOrders:userId${userId}`, uuid);
     await pipeline.exec();
 

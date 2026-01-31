@@ -1,15 +1,15 @@
 import { createClient, RedisClientType } from "redis";
-import { config } from "../env-config/config";
+// import { config } from "../env-config/config";
 
 class RedisConnection {
   private redis: RedisClientType;
   private isConnected = false;
 
   constructor() {
-    this.redis = createClient({
-      url: config.REDIS_URI,
-    });
-
+    this.redis = createClient();
+    // {
+    //       url: config.REDIS_URI,
+    //     }
     this.redis.on("error", (err) => {
       console.error("Redis Client Error:", err);
     });
