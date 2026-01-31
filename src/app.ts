@@ -7,6 +7,7 @@ import { walletRoutes } from "./services/wallet-services/wallet-routes";
 import { initKafkaService } from "./services/kafka-services/kafka-initaliazation";
 import { orderRoutes } from "./services/order-services/place-orders/order-routes";
 import { redisInit } from "./config/redis-config/redis-initialisatio";
+import { orderHistoryRoutes } from "./services/order-services/order-history/order-history-routes";
 
 dotenv.config({
   path: "./.env",
@@ -23,5 +24,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/order-history", orderHistoryRoutes);
 
 export { app };
