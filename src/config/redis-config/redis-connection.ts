@@ -1,26 +1,34 @@
-import { createClient } from "redis";
+import { createClient, RedisClientType } from "redis";
 import { config } from "../env-config/config";
 
 class RedisConnection {
+  private redis: RedisClientType;
+  private isConnected = false;
+
   constructor() {
-    try {
-      this.redis = createClient({
-        url: config.REDIS_URI,
-      });
-      this.redis.on("error", (err: unknown) =>
-        console.log("Redis Client Error", err),
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    this.redis = createClient({
+      url: config.REDIS_URI,
+    });
+
+    this.redis.on("error", (err) => {
+      console.error("Redis Client Error:", err);
+    });
+
+    this.redis.on("connect", () => {
+      console.log("Redis connecting...");
+    });
   }
 
-  async RedisConnection(): Promise<void> {
+  async connect(): Promise<void> {
     await this.redis.connect();
+    this.isConnected = true;
     console.log("Successfully connected to Redis");
   }
 
-  getClient() {
+  getClient(): RedisClientType {
+    if (!this.isConnected) {
+      throw new Error("Redis not connected. Call Redis.connect() first.");
+    }
     return this.redis;
   }
 }
