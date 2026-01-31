@@ -43,8 +43,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
     const tradedQuantity = Math.min(userQty, counterQty);
 
-    userQty = userQty - tradedQuantity; //if left again added to redis
-    // console.log(userQty);
+    userQty = userQty - tradedQuantity; //if left, again added to redis
 
     //removed resting order here
     await Redis.getClient().zRem(oppositeBook, order[0]);
@@ -59,16 +58,16 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
 
     const trade = {
-      buyerId: orderSide === "BUY" ? id : counterUserId,
-      sellerId: orderSide === "SELL" ? id : counterUserId,
-      buyOrderId: orderSide === "BUY" ? userOrderId : counterOrderId,
-      sellOrderId: orderSide === "SELL" ? userOrderId : counterOrderId,
-      currencyPair,
-      orderType: "Market",
-      status: newQty === 0 ? "Filled" : "Partially Filled",
+      buyerUserId: orderSide === "BUY" ? id : counterUserId,
+      sellerUserId: orderSide === "SELL" ? id : counterUserId,
+      buyerOrderId: orderSide === "BUY" ? userOrderId : counterOrderId,
+      sellerOrderId: orderSide === "SELL" ? userOrderId : counterOrderId,
       tradedQuantity,
       executionPrice: bestPrice,
-      
+      orderAmount: tradedQuantity * bestPrice,
+      status: newQty === 0 ? "Filled" : "Partially Filled",
+      buyerRealizedPnL: (bestPrice - entryPrice) * tradedQuantity,
+      sellerRealizedPnL: (entryPrice - bestPrice) * tradedQuantity,
     };
 
     trades.push(trade);

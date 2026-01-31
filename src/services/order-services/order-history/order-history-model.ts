@@ -1,30 +1,28 @@
 import mongoose, { Schema, Document, Types, Model } from "mongoose";
 
 export interface IOrderHistory extends Document {
-  buyerId: Types.ObjectId;
-  sellerId: Types.ObjectId;
+  buyerUserId: Types.ObjectId;
+  sellerUserId: Types.ObjectId;
   buyerOrderId: string;
   sellerOrderId: string;
-  currencyPair: string;
-  orderType: string;
-  buyerOrderSide: string;
-  sellerOrderSide: string;
   tradedQuantity: number;
   executionPrice: number;
+  orderAmount: number;
   status: string;
-  realizedPnL: number;
+  buyerRealizedPnL: number;
+  sellerRealizedPnL: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 const orderHistorySchema = new Schema<IOrderHistory>(
   {
-    buyerId: {
+    buyerUserId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    sellerId: {
+    sellerUserId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -39,10 +37,6 @@ const orderHistorySchema = new Schema<IOrderHistory>(
       required: true,
       index: true,
     },
-    currencyPair: {
-      type: String,
-      required: true,
-    },
     tradedQuantity: {
       type: Number,
       required: true,
@@ -51,26 +45,20 @@ const orderHistorySchema = new Schema<IOrderHistory>(
       type: Number,
       required: true,
     },
-    buyerOrderSide: {
-      type: String,
-      enum: ["BUY", "SELL"],
-      required: true,
-    },
-    sellerOrderSide: {
-      type: String,
-      enum: ["BUY", "SELL"],
-      required: true,
-    },
-    orderType: {
-      type: String,
-      enum: ["Market"],
+    orderAmount: {
+      type: Number,
       required: true,
     },
     status: {
       type: String,
       enum: ["Filled", "Partially Filled"],
     },
-    realizedPnL: {
+    buyerRealizedPnL: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    sellerRealizedPnL: {
       type: Number,
       required: true,
       default: 0,
