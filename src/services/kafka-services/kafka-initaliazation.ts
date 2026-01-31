@@ -1,4 +1,4 @@
-// import { Redis } from "../../config/redis-config/redis-connection";
+import { Redis } from "../../config/redis-config/redis-connection";
 import { orderHistory } from "../order-services/order-history/order-history-model";
 import { IOrder, Order } from "../order-services/place-orders/order-model";
 import { orderMatchingEngine } from "../../matching-engine-algorithm/orders-matching-engine";
@@ -61,6 +61,8 @@ const bulkInsertion = async () => {
           { $inc: { balance: -order.orderAmount } },
           { new: true },
         );
+        console.log(`wallet:${order.user}:USDT:balance`);
+        await Redis.getClient().del(`wallet:${order.user}:USDT:balance`);
       } else {
         await Wallet.findOneAndUpdate(
           {
@@ -69,6 +71,9 @@ const bulkInsertion = async () => {
           },
           { $inc: { balance: -order.orderQuantity } },
           { new: true },
+        );
+        await Redis.getClient().del(
+          `wallet:${order.user}:${order.currencyPair}:balance`,
         );
       }
 
