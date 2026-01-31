@@ -77,6 +77,7 @@ const bulkInsertion = async () => {
       }
 
       const trades = await orderMatchingEngine(order);
+      console.log(trades)
       if (trades?.length) {
         await orderHistory.insertMany(trades);
         for (const trade of trades) {

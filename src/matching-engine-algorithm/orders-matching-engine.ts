@@ -18,7 +18,6 @@ export const orderMatchingEngine = async (message: IOrder) => {
   const trades = [];
 
   while (userQty > 0) {
-
     const order =
       orderSide === "BUY"
         ? await Redis.getClient().zPopMin(oppositeBook)
@@ -63,9 +62,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
       tradedQuantity,
       executionPrice: bestPrice,
       orderAmount: tradedQuantity * bestPrice,
-      status: newQty === 0 ? "Filled" : "Partially Filled",
-      buyerRealizedPnL: (bestPrice - entryPrice) * tradedQuantity,
-      sellerRealizedPnL: (entryPrice - bestPrice) * tradedQuantity,
+      status: userQty === 0 ? "Filled" : "Partially Filled",
     };
 
     trades.push(trade);
