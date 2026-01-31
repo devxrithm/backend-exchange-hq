@@ -2,7 +2,7 @@ import http from "k6/http";
 // import { sleep } from "k6";
 
 export const options = {
-  vus: 1000,
+  vus: 10,
   duration: "60s",
   cloud: {
     // Project: testing-pro
@@ -13,7 +13,7 @@ export const options = {
 };
 
 export default function () {
-  http.get("http://localhost:3000/api/wallet/getuserbalance/ETHUSDT");
+  http.get("http://localhost:3000/api/wallet/getuserbalance/USDT");
   // sleep(1);
 }
 

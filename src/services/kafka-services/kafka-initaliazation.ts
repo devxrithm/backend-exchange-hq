@@ -1,7 +1,7 @@
 // import { Redis } from "../../config/redis-config/redis-connection";
 import { orderHistory } from "../order-services/order-history/order-history-model";
 import { IOrder, Order } from "../order-services/place-orders/order-model";
-import { orderMatchingEngine } from "../orders-matching-engine";
+import { orderMatchingEngine } from "../../matching-engine-algorithm/orders-matching-engine";
 import { Wallet } from "../wallet-services/wallet-model";
 import kafkaConsumer from "./kafka-consumer";
 import { Kafka } from "./kafka-producer";

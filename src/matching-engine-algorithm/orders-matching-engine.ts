@@ -1,5 +1,5 @@
 import { Redis } from "../config/redis-config/redis-connection";
-import { IOrder } from "./order-services/place-orders/order-model";
+import { IOrder } from "../services/order-services/place-orders/order-model";
 
 export const orderMatchingEngine = async (message: IOrder) => {
   // for buy order

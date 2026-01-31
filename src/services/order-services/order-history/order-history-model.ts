@@ -53,16 +53,6 @@ const orderHistorySchema = new Schema<IOrderHistory>(
       type: String,
       enum: ["Filled", "Partially Filled"],
     },
-    buyerRealizedPnL: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    sellerRealizedPnL: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
   {
     timestamps: true,
