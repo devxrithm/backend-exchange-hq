@@ -48,100 +48,102 @@ const bulkInsertion = async () => {
   //Start at index 0 and Remove 1000 elements and finally Return those 1000 elements
 
   try {
-    await Order.insertMany(batch, { ordered: true });
-
-    for (const order of batch) {
-      // Deducted wallet balance update logic here
+    await Order.insertMany(batch, { ordered: false });
+    //instead of one by one operation i used bulk operation here
+    const walletOps = batch.map((order) => {
       if (order.orderSide === "BUY") {
-        await Wallet.findOneAndUpdate(
-          {
-            user: order.user,
-            asset: "USDT",
+        return {
+          updateOne: {
+            filter: { user: order.user, asset: "USDT" },
+            update: { $inc: { balance: -order.orderAmount } },
           },
-          { $inc: { balance: -order.orderAmount } },
-          { new: true },
-        );
-        await Redis.getClient().del(`wallet:${order.user}:USDT:balance`);
+        };
       } else {
-        await Wallet.findOneAndUpdate(
-          {
-            user: order.user,
-            asset: order.currencyPair,
+        return {
+          updateOne: {
+            filter: { user: order.user, asset: order.currencyPair },
+            update: { $inc: { balance: -order.orderQuantity } },
           },
-          { $inc: { balance: -order.orderQuantity } },
-          { new: true },
-        );
-        await Redis.getClient().del(
-          `wallet:${order.user}:${order.currencyPair}:balance`,
-        );
+        };
       }
+    });
+    //here walletops return an array of updateone operations
+    await Wallet.bulkWrite(walletOps, { ordered: false }); //why i ordered false because if one operation fails other should continue
 
-      const trades = await orderMatchingEngine(order);
-      console.log(trades)
-      if (trades?.length) {
-        await orderHistory.insertMany(trades);
-        for (const trade of trades) {
-          const sellerOrder = await Order.findOne({
-            orderId: trade.sellerOrderId,
-          });
-
-          if (!sellerOrder) {
-            console.error(`Seller order not found: ${trade.sellerOrderId}`);
-            continue;
-          }
-
-          // Update wallets based on trade execution
-          // Buyer receives the asset
-          //here i used agregate function to update wallet balance
-          const wallet = await Wallet.findOneAndUpdate(
-            { user: trade.buyerUserId, asset: sellerOrder.currencyPair },
-            { $inc: { balance: trade.tradedQuantity } }, // Buyer gets the asset
-            { new: true, upsert: true },
-          );
-          //in case if wallet not created
-          if (!wallet) {
-            await Wallet.create({
-              user: trade.buyerUserId,
-              asset: sellerOrder.currencyPair,
-              balance: trade.tradedQuantity,
-            });
-          }
-
-          // Seller receives USDT
-          const walletusdt = await Wallet.findOneAndUpdate(
-            { user: trade.sellerUserId, asset: "USDT" },
-            { $inc: { balance: trade.tradedQuantity * trade.executionPrice } }, // Seller gets USDT
-            { new: true, upsert: true },
-          );
-          if (!walletusdt) {
-            await Wallet.create({
-              user: trade.sellerUserId,
-              asset: "USDT",
-              balance: trade.tradedQuantity * trade.executionPrice,
-            });
-          }
-          // If order was partially filled, return remaining balance
-          //   if (trade.tradedQuantity < order.orderQuantity) {
-          //     const remainingAmount =
-          //       order.orderSide === "BUY"
-          //         ? (order.orderQuantity - trade.tradedQuantity) *
-          //           order.entryPrice
-          //         : order.orderQuantity - trade.tradedQuantity;
-
-          //     await Wallet.findOneAndUpdate(
-          //       {
-          //         userId: order.user,
-          //         asset: order.orderSide === "BUY" ? "USDT" : order.currencyPair,
-          //       },
-          //       { $inc: { balance: remainingAmount } },
-          //       { new: true },
-          //     );
-          //   }
-        }
+    //after, i updated wallet balance i need to clear redis cache
+    const multi = Redis.getClient().multi();
+    for (const order of batch) {
+      if (order.orderSide === "BUY") {
+        multi.del(`wallet:${order.user}:USDT:balance`);
+      } else {
+        multi.del(`wallet:${order.user}:${order.currencyPair}:balance`);
       }
-     
     }
-  } catch (error) {
+    await multi.exec();
+
+    //here we execute the engine in parallel
+    // matching engine start here
+    const tradeResults = await Promise.all(
+      batch.map((order) => orderMatchingEngine(order)),
+    );
+    //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
+    const allTrades = tradeResults.flat();
+    if (allTrades.length === 0) {
+      processing = false;
+      return;
+    }
+    //push alltrades to orderHistory collection
+    await orderHistory.insertMany(allTrades);
+
+    //now after update order history we need to update order positionStatus in Order collection
+    const orderStatusOps = [];
+
+    for (const trade of allTrades) {
+      orderStatusOps.push(
+        {
+          updateOne: {
+            filter: { orderId: trade.buyerOrderId },
+            update: { positionStatus: "Closed" },
+          },
+        },
+        {
+          updateOne: {
+            filter: { orderId: trade.sellerOrderId },
+            update: { positionStatus: "Closed" },
+          },
+        },
+      );
+    }
+
+    await Order.bulkWrite(orderStatusOps, { ordered: false });
+
+    const tradeWalletOps = [];
+
+    for (const trade of allTrades) {
+      tradeWalletOps.push({
+        updateOne: {
+          filter: { user: trade.buyerUserId, asset: trade.currencyPair },
+          update: { $inc: { balance: trade.tradedQuantity } },
+          upsert: true,
+        },
+      });
+      tradeWalletOps.push({
+        updateOne: {
+          filter: { user: trade.sellerUserId, asset: "USDT" },
+          update: {
+            $inc: { balance: trade.tradedQuantity * trade.executionPrice },
+          },
+          upsert: true,
+        },
+      });
+    }
+
+    if (tradeWalletOps.length > 0) {
+      await Wallet.bulkWrite(tradeWalletOps, { ordered: false });
+    }
+
+  }
+ catch (error) {
     console.error("Flush failed:", error);
     messages.push(...batch);
   } finally {

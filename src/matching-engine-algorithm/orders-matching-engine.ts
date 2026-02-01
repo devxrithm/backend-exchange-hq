@@ -55,6 +55,7 @@ export const orderMatchingEngine = async (message: IOrder) => {
     }
 
     const trade = {
+      currencyPair,
       buyerUserId: orderSide === "BUY" ? id : counterUserId,
       sellerUserId: orderSide === "SELL" ? id : counterUserId,
       buyerOrderId: orderSide === "BUY" ? userOrderId : counterOrderId,

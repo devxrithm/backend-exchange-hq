@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types, Model } from "mongoose";
 
 export interface IOrderHistory extends Document {
+  currencyPair: string;
   buyerUserId: Types.ObjectId;
   sellerUserId: Types.ObjectId;
   buyerOrderId: string;
@@ -17,6 +18,10 @@ export interface IOrderHistory extends Document {
 
 const orderHistorySchema = new Schema<IOrderHistory>(
   {
+    currencyPair: {
+      type: String,
+      required: true,
+    },
     buyerUserId: {
       type: Schema.Types.ObjectId,
       ref: "User",
