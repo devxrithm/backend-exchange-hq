@@ -3,7 +3,7 @@ export { sellOrder } from "./order-sell-controller";
 export { buyOrder } from "./order-buy-controller";
 
 export { Redis } from "../../../../config/redis-config/redis-connection";
-export { Kafka } from "../../../kafka-services/kafka-producer";
+export { Kafka } from "../../../../config/kafka-config/kafka-producer"
 export { Order } from "../order-model";
 export { Response } from "express";
 export { Wallet } from "../../../wallet-services/wallet-model";
