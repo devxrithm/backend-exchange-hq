@@ -1,9 +1,10 @@
 import { Router } from "express";
 import {
-  getUserBalance,
-  updateUserBalance,
   createWallet,
-} from "./wallet-controllers";
+  updateUserBalance,
+  getUserBalance,
+} from "./wallet-controller/export";
+
 import { verifyJWT } from "../../middleware/jwt-verify";
 
 const walletRoutes: Router = Router();
