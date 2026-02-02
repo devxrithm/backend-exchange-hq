@@ -6,7 +6,7 @@ import { Wallet } from "../wallet-services/wallet-model";
 
 let processing = false;
 
-export const bulkInsertion = async (messages:IOrder[]) => {
+export const bulkInsertion = async (messages: IOrder[]) => {
   if (processing || messages.length === 0) return;
   processing = true;
   const batch = messages.splice(0, 1000);
@@ -52,8 +52,8 @@ export const bulkInsertion = async (messages:IOrder[]) => {
       batch.map((order) => orderMatchingEngine(order)),
     );
 
-    console.log("tradeResults");
-    console.log(tradeResults);
+    // console.log("tradeResults");
+    // console.log(tradeResults);
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
     if (allTrades.length === 0) {

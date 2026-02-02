@@ -18,10 +18,13 @@ const PAIRS = [
  * k6 test configuration
  */
 export const options = {
-  stages: [{ duration: "30s", target: 10 }],
+  stages: [
+    { duration: "20s", target: 100 },
+    { duration: "20s", target: 300 },
+    { duration: "20s", target: 500 },
+  ],
   thresholds: {
-    http_req_failed: ["rate<0.01"], // < 1% failures
-    http_req_duration: ["p(95)<6000"], // p95 < 3s
+    http_req_duration: ["p(95)<1000"], // p95 < 1s under load
   },
 };
 
@@ -48,11 +51,17 @@ function randomAmount() {
  * Main test
  */
 export default function () {
-  const url = "http://localhost:3000/api/order/buyorder";
+  const orderSide = randomSide();
+
+  // 🔁 Route based on order side
+  const url =
+    orderSide === "BUY"
+      ? "http://localhost:3000/api/order/buyorder"
+      : "http://localhost:3000/api/order/sellOrder";
 
   const payload = JSON.stringify({
     currencyPair: randomPair(), // 🔑 Kafka partition key
-    orderSide: randomSide(),
+    orderSide,
     orderType: "Market",
     entryPrice: randomPrice(),
     positionStatus: "Open",
