@@ -44,7 +44,7 @@ export const buyOrder = async (
     const wallet = await Redis.getClient().get(redisKey);
     console.timeEnd("redis-get-wallet");
     let walletBalance = Number(wallet);
-  
+
     if (walletBalance === 0) {
       const walletDB = await Wallet.findOne({
         user: userId,
@@ -94,7 +94,7 @@ export const buyOrder = async (
     const pipeline = Redis.getClient().multi();
     pipeline.hSet(`orderdetail:orderID:${uuid}`, buyOrder);
     pipeline.expire(`orderdetail:orderID:${uuid}`, 5000); //set expiry of 5000 seconds
-    pipeline.sAdd(`openOrders:userId${userId}`, uuid);
+    pipeline.sAdd(`openOrders:userId:${userId}`, uuid);
     await pipeline.exec();
     console.timeEnd("redis-pipeline");
 

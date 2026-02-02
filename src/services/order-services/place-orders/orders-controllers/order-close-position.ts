@@ -8,7 +8,7 @@ import {
   Response,
 } from "../orders-controllers/export";
 
-export const openPosition = async (
+export const closePosition = async (
   _req: AuthRequest,
   res: Response,
 ): Promise<Response> => {
@@ -21,7 +21,7 @@ export const openPosition = async (
     const redis = Redis.getClient();
 
     const orderIds = await redis.zRange(
-      "openOrders:user:696f330085f796568d1339ea",
+      "closeOrders:user:696f330085f796568d1339ea",
       0,
       5,
     );
@@ -45,7 +45,7 @@ export const openPosition = async (
 
     const orders = await Order.find({
       user: "696f330085f796568d1339ea",
-      positionStatus: "Open",
+      positionStatus: "Closed",
     })
       .sort({
         createdAt: -1,
@@ -70,11 +70,11 @@ export const openPosition = async (
           positionStatus: order.positionStatus,
         }),
         pipeline.expire(`orderdetail:orderID:${orderId}`, 300),
-        pipeline.zAdd(`openOrders:user:${order.user}`, {
+        pipeline.zAdd(`closeOrders:user:${order.user}`, {
           score: Number(order.createdAt?.getTime()),
           value: order.orderId,
         }),
-        pipeline.expire(`openOrders:user:${order.user}`, 300),
+        pipeline.expire(`closeOrders:user:${order.user}`, 300),
       ]);
     });
 

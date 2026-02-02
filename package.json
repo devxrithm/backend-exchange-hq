@@ -20,16 +20,18 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/k6": "^1.5.0",
     "@types/kafkajs-snappy": "^1.0.0",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
+    "k6": "^0.0.0",
+    "pm2": "^6.0.14",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.0"
   },
   "dependencies": {
-    "@types/k6": "^1.5.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -37,11 +39,9 @@
     "express": "^5.1.0",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
-    "k6": "^0.0.0",
     "kafkajs": "^2.2.4",
     "kafkajs-snappy": "^1.1.0",
     "mongoose": "^9.0.0",
-    "pm2": "^6.0.14",
     "redis": "^5.10.0",
     "uuid": "^13.0.0"
   }
