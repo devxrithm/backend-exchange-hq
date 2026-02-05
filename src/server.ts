@@ -3,7 +3,7 @@ import dbConnect from "./config/db-config/db-connection";
 
 const startServer = async () => {
   await dbConnect();
-  app.listen(3000, () => {
+  app.listen(8000, () => {
     console.log("server running on port 3000");
     console.log(`Worker PID ${process.pid} listening`);
   });

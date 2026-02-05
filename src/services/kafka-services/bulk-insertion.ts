@@ -52,8 +52,6 @@ export const bulkInsertion = async (messages: IOrder[]) => {
       batch.map((order) => orderMatchingEngine(order)),
     );
 
-    // console.log("tradeResults");
-    // console.log(tradeResults);
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
     if (allTrades.length === 0) {
