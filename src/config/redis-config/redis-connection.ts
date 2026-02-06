@@ -1,12 +1,14 @@
 import { createClient, RedisClientType } from "redis";
-// import { config } from "../env-config/config";
+import { config } from "../env-config/config";
 
 class RedisConnection {
   private redis: RedisClientType;
   private isConnected = false;
 
   constructor() {
-    this.redis = createClient();
+    this.redis = createClient({
+      url: String(config.REDIS_URI),
+    });
     // {
     //       url: config.REDIS_URI,
     //     }
