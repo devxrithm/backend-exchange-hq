@@ -1,7 +1,9 @@
 import { Kafka, logLevel } from "kafkajs";
 import { config } from "../env-config/config";
-import fs from "node:fs";
-import path from "path";
+// import fs from "node:fs";
+// import path from "path";
+const ca = Buffer.from(String(config.KAFKA_CERT), "base64").toString("utf-8");
+console.log("Kafka CA Certificate:", ca);
 
 class KafkaConfig {
   private kafka: Kafka;
@@ -13,7 +15,7 @@ class KafkaConfig {
       clientId: "my-app",
       brokers: [this.brokers],
       ssl: {
-        ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
+        ca: [ca],
       },
       sasl: {
         mechanism: "plain",
