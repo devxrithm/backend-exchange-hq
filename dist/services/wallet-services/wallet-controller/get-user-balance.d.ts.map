@@ -1,1 +1,0 @@
-{"version":3,"file":"get-user-balance.d.ts","sourceRoot":"","sources":["../../../../src/services/wallet-services/wallet-controller/get-user-balance.ts"],"names":[],"mappings":"AAAA,OAAO,EAKL,WAAW,EACX,QAAQ,EAET,MAAM,UAAU,CAAC;AAElB,eAAO,MAAM,cAAc,GAAU,KAAK,WAAW,EAAE,KAAK,QAAQ,gDAqDnE,CAAC"}
