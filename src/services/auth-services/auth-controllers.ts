@@ -133,7 +133,7 @@ const userLogin = async (
     //loggedInUser is optionally because we can also extract user details directly from stored jwt tokens
 
     // If you want to return a token, generate it here
-    res
+    return res
       .status(200)
       .cookie("accessToken", accessToken, {
         // httpOnly: true,
@@ -162,11 +162,11 @@ const userLogin = async (
     //we can check if error is instance of ApiError
     //we use oops concept to handle the error
     if (error instanceof ApiErrorHandling) {
-      res
+      return res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
     } else {
-      res
+      return res
         .status(HttpCodes.INTERNAL_SERVER_ERROR)
         .json(
           new ApiResponse(

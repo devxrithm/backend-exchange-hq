@@ -10,8 +10,8 @@ import {
 
 export const getUserBalance = async (req: AuthRequest, res: Response) => {
   try {
-    // const userid = req.user?._id;
-    const userid = "696f330085f796568d1339ea";
+    const userid = req.user?._id;
+    // const userid = "696f330085f796568d1339ea";
     if (!userid) {
       throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
     }

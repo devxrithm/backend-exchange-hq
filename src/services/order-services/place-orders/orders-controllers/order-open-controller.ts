@@ -9,19 +9,19 @@ import {
 } from "../orders-controllers/export";
 
 export const openPosition = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    // const userId = req.user?._id;
-    // if (!userId) {
-    //   throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
-    // }
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
+    }
 
     const redis = Redis.getClient();
 
     const orderIds = await redis.zRange(
-      "openOrders:user:696f330085f796568d1339ea",
+      `openOrders:user:${userId}`,
       0,
       5,
     );
@@ -44,7 +44,7 @@ export const openPosition = async (
     }
 
     const orders = await Order.find({
-      user: "696f330085f796568d1339ea",
+      user: userId,
       positionStatus: "Open",
     })
       .sort({
