@@ -6,7 +6,7 @@ import {
   jwtVerifyAccessToken,
   ApiErrorHandling,
 } from "../utils/utils-export";
-
+console.log("ukcode")
 export interface AuthRequest extends Request {
   user?: {
     _id: string;
