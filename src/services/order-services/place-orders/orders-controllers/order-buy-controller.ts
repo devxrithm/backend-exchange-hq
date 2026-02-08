@@ -27,8 +27,8 @@ export const buyOrder = async (
     }: IBuyRequestBody = req.body;
 
     //fetch userid from middleware
-    // const userId = req.user?._id;
-    const userId = "696f330085f796568d1339ea";
+    const userId = req.user?._id;
+ 
     if (!userId) {
       throw new ApiErrorHandling(
         HttpCodes.UNAUTHORIZED,

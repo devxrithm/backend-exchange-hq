@@ -20,24 +20,18 @@ export const openPosition = async (
 
     const redis = Redis.getClient();
 
-    const orderIds = await redis.zRange(
-      `openOrders:user:${userId}`,
-      0,
-      5,
+    const orderIds = await redis.sMembers(
+      `openOrders:userId:${userId}`
     );
-
+    
     if (orderIds.length) {
+
       const result = await Promise.all(
         orderIds.map(async (Id) => {
-          return await redis.hmGet(`orderdetail:orderID:${Id}`, [
-            "orderId",
-            "orderSide",
-            "orderQuantity",
-            "entryPrice",
-            "positionStatus",
-          ]);
+          return await redis.hGetAll(`orderdetail:orderID:${Id}`);
         }),
       );
+
       return res
         .status(HttpCodes.OK)
         .json(new ApiResponse(HttpCodes.OK, result, "Live trades from redis"));
@@ -60,7 +54,7 @@ export const openPosition = async (
       await Promise.all([
         pipeline.hSet(`orderdetail:orderID:${orderId}`, {
           orderId: order.orderId,
-          userId: order.user.toString(),
+          user: order.user.toString(),
           currencyPair: order.currencyPair,
           orderSide: order.orderSide,
           orderType: order.orderType,
@@ -69,12 +63,9 @@ export const openPosition = async (
           orderQuantity: order.orderQuantity.toString(),
           positionStatus: order.positionStatus,
         }),
-        pipeline.expire(`orderdetail:orderID:${orderId}`, 300),
-        pipeline.zAdd(`openOrders:user:${order.user}`, {
-          score: Number(order.createdAt?.getTime()),
-          value: order.orderId,
-        }),
-        pipeline.expire(`openOrders:user:${order.user}`, 300),
+        pipeline.expire(`orderdetail:orderID:${orderId}`, 50000),
+        pipeline.sAdd(`openOrders:userId:${order.user}`, orderId),
+        pipeline.expire(`openOrders:user:${order.user}`, 50000),
       ]);
     });
 
@@ -84,6 +75,7 @@ export const openPosition = async (
       .status(HttpCodes.OK)
       .json(new ApiResponse(HttpCodes.OK, orders, "Live from DB trades"));
   } catch (error) {
+    console.log(error)
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

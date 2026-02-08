@@ -12,9 +12,8 @@ const authRoutes: Router = Router();
 authRoutes.post("/login", userLogin);
 authRoutes.post("/signup", userSignup);
 authRoutes.post("/logout", verifyJWT, userLogout);
-authRoutes.get(
+authRoutes.post(
   "/new-refresh-token",
-  verifyJWT,
   genrateNewAccessAndRefreshToken,
 );
 
