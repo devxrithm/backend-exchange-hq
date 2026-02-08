@@ -8,6 +8,7 @@ import { initKafkaService } from "./services/kafka-services/kafka-initaliazation
 import { orderRoutes } from "./services/order-services/place-orders/order-routes";
 import { redisInit } from "./config/redis-config/redis-initialisatio";
 import { orderHistoryRoutes } from "./services/order-services/order-history/order-history-routes";
+import { config } from "./config/env-config/config";
 
 dotenv.config({
   path: "./.env",
@@ -18,8 +19,7 @@ redisInit();
 
 app.use(
   cors({
-    origin: "http://localhost:3001",
-    optionsSuccessStatus: 200,
+    origin: config.CORS_URL,
     credentials: true,
   }),
 );
