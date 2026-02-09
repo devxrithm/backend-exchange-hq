@@ -23,8 +23,8 @@ export const openPosition = async (
     const orderIds = await redis.sMembers(
       `openOrders:userId:${userId}`
     );
-    
-    if (orderIds.length) {
+
+    if (orderIds.length>0) {
 
       const result = await Promise.all(
         orderIds.map(async (Id) => {

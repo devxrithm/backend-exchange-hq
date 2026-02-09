@@ -95,6 +95,7 @@ export const buyOrder = async (
     pipeline.hSet(`orderdetail:orderID:${uuid}`, buyOrder);
     pipeline.expire(`orderdetail:orderID:${uuid}`, 5000); //set expiry of 5000 seconds
     pipeline.sAdd(`openOrders:userId:${userId}`, uuid);
+    pipeline.expire(`openOrders:user:${userId}`, 50000),
     await pipeline.exec();
     //console.timeEnd("redis-pipeline");
 

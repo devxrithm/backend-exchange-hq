@@ -39,9 +39,6 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     const multi = Redis.getClient().multi();
 
     for (const order of batch) {
-      multi.del(
-        `openOrders:userId:${order.user}`
-      );
       if (order.orderSide === "BUY") {
         multi.del(`wallet:${order.user}:USDT:balance`);
         // multi.del(`orderdetail:orderID:${orderId}`)
