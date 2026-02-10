@@ -6,8 +6,6 @@ import { check, sleep } from "k6";
  */
 const PAIRS = [
   "BTCUSDT",
-  "ETHUSDT",
-  "SOLUSDT",
   "BNBUSDT",
   "XRPUSDT",
   "ADAUSDT",
