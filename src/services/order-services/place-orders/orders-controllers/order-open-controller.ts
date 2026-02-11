@@ -23,8 +23,8 @@ export const openPosition = async (
     const orderIds = await redis.sMembers(
       `openOrders:userId:${userId}`
     );
-
-    if (orderIds.length>0) {
+console.log(orderIds[0])
+    if (orderIds[0] != null) {
 
       const result = await Promise.all(
         orderIds.map(async (Id) => {
@@ -65,7 +65,7 @@ export const openPosition = async (
         }),
         pipeline.expire(`orderdetail:orderID:${orderId}`, 50000),
         pipeline.sAdd(`openOrders:userId:${order.user}`, orderId),
-        pipeline.expire(`openOrders:user:${order.user}`, 50000),
+        pipeline.expire(`openOrders:userId:${order.user}`, 50000),
       ]);
     });
 
