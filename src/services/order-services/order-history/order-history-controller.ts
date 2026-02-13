@@ -9,7 +9,7 @@ import { orderHistory } from "./order-history-model";
 
 export const orderHistoryController = async (
   req: AuthRequest,
-  res: Response,
+  res: Response
 ): Promise<Response> => {
   try {
     const userId = req.user?._id;
@@ -17,37 +17,38 @@ export const orderHistoryController = async (
     if (!userId) {
       throw new ApiErrorHandling(
         HttpCodes.UNAUTHORIZED,
-        "User not authenticated",
+        "User not authenticated"
       );
     }
-    const result = await orderHistory.find({
-      $or: [{ buyerUserId: userId }, { sellerUserId: userId }],
-    });
 
-    return res
-      .status(HttpCodes.OK)
-      .json(
-        new ApiResponse(
-          HttpCodes.OK,
-          result,
-          "Order history fetched successfully",
-        ),
-      );
+    const result = await orderHistory
+      .find({
+        $or: [
+          { buyerUserId: userId },
+          { sellerUserId: userId },
+        ],
+      }).lean();
+
+    return res.status(HttpCodes.OK).json(
+      new ApiResponse(
+        HttpCodes.OK,
+        result,
+        "Order history fetched successfully"
+      )
+    );
   } catch (error) {
+    console.log(error)
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)
         .json(new ApiResponse(error.statusCode, null, error.message));
-    } else {
-      return res
-        .status(HttpCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            HttpCodes.INTERNAL_SERVER_ERROR,
-            null,
-            "Internal Server Error",
-          ),
-        );
     }
+    return res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(
+      new ApiResponse(
+        HttpCodes.INTERNAL_SERVER_ERROR,
+        null,
+        "Internal Server Error"
+      )
+    );
   }
 };

@@ -10,8 +10,6 @@ export interface IOrderHistory extends Document {
   executionPrice: number;
   orderAmount: number;
   status: string;
-  buyerRealizedPnL: number;
-  sellerRealizedPnL: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

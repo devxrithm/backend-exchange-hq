@@ -9,33 +9,26 @@ import {
 } from "../orders-controllers/export";
 
 export const closePosition = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    // const userId = req.user?._id;
-    // if (!userId) {
-    //   throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
-    // }
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "Unauthorized");
+    }
 
     const redis = Redis.getClient();
 
-    const orderIds = await redis.zRange(
-      "closeOrders:user:696f330085f796568d1339ea",
-      0,
-      5,
+    const orderIds = await redis.sMembers(
+      `closeOrders:userId:${userId}`
     );
+// console.log(orderIds)
+    if (orderIds[0] != null) {
 
-    if (orderIds.length) {
       const result = await Promise.all(
         orderIds.map(async (Id) => {
-          return await redis.hmGet(`orderdetail:orderID:${Id}`, [
-            "orderId",
-            "orderSide",
-            "orderQuantity",
-            "entryPrice",
-            "positionStatus",
-          ]);
+          return await redis.hGetAll(`orderdetail:orderID:${Id}`);
         }),
       );
       return res
@@ -44,7 +37,7 @@ export const closePosition = async (
     }
 
     const orders = await Order.find({
-      user: "696f330085f796568d1339ea",
+      user: userId,
       positionStatus: "Closed",
     })
       .sort({
@@ -69,12 +62,9 @@ export const closePosition = async (
           orderQuantity: order.orderQuantity.toString(),
           positionStatus: order.positionStatus,
         }),
-        pipeline.expire(`orderdetail:orderID:${orderId}`, 300),
-        pipeline.zAdd(`closeOrders:user:${order.user}`, {
-          score: Number(order.createdAt?.getTime()),
-          value: order.orderId,
-        }),
-        pipeline.expire(`closeOrders:user:${order.user}`, 300),
+        pipeline.expire(`orderdetail:orderID:${orderId}`, 50000),
+        pipeline.sAdd(`closeOrders:userId:${order.user}`, orderId),
+        pipeline.expire(`closeOrders:userId:${order.user}`, 50000),
       ]);
     });
 
