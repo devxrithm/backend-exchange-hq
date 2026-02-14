@@ -9,6 +9,7 @@ import { orderRoutes } from "./services/order-services/place-orders/order-routes
 import { redisInit } from "./config/redis-config/redis-initialisatio";
 import { orderHistoryRoutes } from "./services/order-services/order-history/order-history-routes";
 import { config } from "./config/env-config/config";
+import { orderBookRoutes } from "./services/order-services/orderbook/order-book-route";
 
 dotenv.config({
   path: "./.env",
@@ -31,5 +32,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/order-history", orderHistoryRoutes);
+app.use("/api/order-book", orderBookRoutes);
 
 export { app };
