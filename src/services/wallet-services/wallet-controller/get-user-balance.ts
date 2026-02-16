@@ -10,38 +10,73 @@ import {
 
 export const getUserBalance = async (req: AuthRequest, res: Response) => {
   try {
-    // const userid = req.user?._id;
-    // if (!userid) {
-    //   throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
-    // }
-    const userid = "696f330085f796568d1339ea";
-    const asset = req.params.asset;
-    const redisKey = `wallet:${userid}:${asset}:balance`;
-    // console.time("redis cache");
-    const cached = await Redis.getClient().get(redisKey);
-    // console.timeEnd("redis cache");
-    if (cached) {
+    const userid = req.user?._id;
+    if (!userid) {
+      throw new ApiErrorHandling(HttpCodes.UNAUTHORIZED, "UNAUTHORIZED");
+    }
+
+    const { asset1, asset2 } = req.query;
+
+    if (!asset1 || !asset2) {
+      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "asset1 and asset2 are required");
+    }
+
+    const redisKey = `wallet:${userid}`;
+
+    // Get both balances in ONE redis call
+    const [cached1, cached2] = await Redis.getClient().hmGet(redisKey, [
+      asset1 as string,
+      asset2 as string,
+    ]);
+
+    if (cached1 && cached2) {
       return res
-        .status(200)
-        .json(new ApiResponse(200, cached, "wallet balance (cache)"));
+        .status(HttpCodes.OK)
+        .json(
+          new ApiResponse(
+            HttpCodes.OK,
+            { asset1: cached1, asset2: cached2 },
+            "wallet balance (cache)",
+          ),
+        );
     }
 
-    const wallet = await Wallet.findOne({ user: userid, asset }).lean();
-    if (!wallet) {
-      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallet not found");
+    // Fetch both wallets in ONE DB query
+    const wallets = await Wallet.find(
+      { $or: [{ asset: asset1, user: userid }, { asset: asset2, user: userid }] },
+      { asset: 1, balance: 1 }
+    ).lean();
+
+    if (!wallets || wallets.length === 0) {
+      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallets not found");
     }
 
-    const walletBalance = wallet.balance;
-    // push to redis
-    await Redis.getClient().set(redisKey, walletBalance);
+    const wallet1 = wallets.find((w) => w.asset === asset1);
+    const wallet2 = wallets.find((w) => w.asset === asset2);
+
+    if (!wallet1) {
+      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, `Wallet not found for ${asset1}`);
+    }
+    if (!wallet2) {
+      throw new ApiErrorHandling(HttpCodes.NOT_FOUND, `Wallet not found for ${asset2}`);
+    }
+
+    const balance1 = wallet1.balance;
+    const balance2 = wallet2.balance;
+
+    // Store both balances in ONE redis call
+    await Redis.getClient().hSet(redisKey, {
+      [asset1 as string]: balance1,
+      [asset2 as string]: balance2,
+    });
 
     return res
       .status(HttpCodes.OK)
       .json(
         new ApiResponse(
           HttpCodes.OK,
-          { walletBalance },
-          "user updated balance",
+          { asset1: balance1, asset2: balance2 },
+          "user wallet balances",
         ),
       );
   } catch (error) {
