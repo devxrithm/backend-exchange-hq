@@ -25,7 +25,7 @@ export const bulkInsertion = async (messages: IOrder[]) => {
           console.log("wallet created successfully")
           walletOpss.push({
             insertOne: {
-              document: { user: order.user, asset: order.currencyPair.toUpperCase().replace("usdt", ""), balance: 0 },
+              document: { user: order.user, asset: order.currencyPair.toUpperCase().replace("USDT", ""), balance: 0 },
               upsert: true
             },
           })

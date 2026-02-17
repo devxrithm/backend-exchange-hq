@@ -47,7 +47,7 @@ export const getUserBalance = async (req: AuthRequest, res: Response) => {
       { asset: 1, balance: 1 }
     ).lean();
 
-    // console.log(wallets)
+    console.log(wallets)
     if (!wallets || wallets.length === 0) {
       throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallets not found");
     }
@@ -64,8 +64,8 @@ export const getUserBalance = async (req: AuthRequest, res: Response) => {
 
     // Store both balances in ONE redis call
     await Redis.getClient().hSet(redisKey, {
-      [asset1 as string]: balance1 as number,
-      [asset2 as string]: balance2 as number || NaN,
+      [asset1 as string]: Number(balance1),
+      [asset2 as string]: Number(balance2) >= 0 ? Number(balance2) : NaN,
     });
 
     return res
