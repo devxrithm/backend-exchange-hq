@@ -47,7 +47,6 @@ export const getUserBalance = async (req: AuthRequest, res: Response) => {
       { asset: 1, balance: 1 }
     ).lean();
 
-    console.log(wallets)
     if (!wallets || wallets.length === 0) {
       throw new ApiErrorHandling(HttpCodes.NOT_FOUND, "Wallets not found");
     }

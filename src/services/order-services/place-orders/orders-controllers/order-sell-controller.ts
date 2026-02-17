@@ -26,8 +26,7 @@ export const sellOrder = async (
       orderQuantity,
     }: ISellRequestBody = req.body;
     // const asset = req.params.asset;
-    // const userId = req.user?._id;
-    const userId = "697735168a96610da52cf73e";
+    const userId = req.user?._id;
 
     if (!userId) {
       throw new ApiErrorHandling(
@@ -37,8 +36,8 @@ export const sellOrder = async (
     }
     const totalAmount = orderQuantity * entryPrice;
 
-    const redisKey = `wallet:${userId}:ETHUSDT:balance`;
-    const wallet = await Redis.getClient().get(redisKey);
+    const redisKey = `wallet:${userId}`;
+    const wallet = await Redis.getClient().hGet(redisKey,currencyPair.toUpperCase().replace("USDT",""));
 
     let walletBalance = Number(wallet);
     if (walletBalance === 0) {
@@ -55,7 +54,10 @@ export const sellOrder = async (
       //push to redis
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
-      await Redis.getClient().set(redisKey, walletBalance);
+      const field = currencyPair.toUpperCase().replace("USDT","");
+      await Redis.getClient().hSet(redisKey, {
+        [field]: walletBalance,
+      });
       
     }
 

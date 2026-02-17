@@ -104,7 +104,7 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     for (const trade of allTrades) {
       tradeWalletOps.push({
         updateOne: {
-          filter: { user: trade.buyerUserId, asset: trade.currencyPair },
+          filter: { user: trade.buyerUserId, asset: trade.currencyPair.toUpperCase().replace("USDT","") },
           update: { $inc: { balance: trade.tradedQuantity } },
           upsert: true,
         },
