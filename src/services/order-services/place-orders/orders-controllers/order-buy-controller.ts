@@ -28,7 +28,7 @@ export const buyOrder = async (
 
     //fetch userid from middleware
     const userId = req.user?._id;
- 
+
     if (!userId) {
       throw new ApiErrorHandling(
         HttpCodes.UNAUTHORIZED,
@@ -38,10 +38,10 @@ export const buyOrder = async (
     //calculate qty so that it can use as globally
     const orderQuantity = orderAmount / entryPrice;
 
-    const redisKey = `wallet:${userId}:USDT:balance`;
+    const redisKey = `wallet:${userId}`;
 
     //console.time("redis-get-wallet");
-    const wallet = await Redis.getClient().get(redisKey);
+    const wallet = await Redis.getClient().hGet(redisKey, "USDT");
     //console.timeEnd("redis-get-wallet");
     let walletBalance = Number(wallet);
 
@@ -56,9 +56,12 @@ export const buyOrder = async (
 
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
-      //console.time("redis-set-wallet");
-      await Redis.getClient().set(redisKey, walletBalance);
-      //console.timeEnd("redis-set-wallet");
+
+      const field = "USDT";
+      await Redis.getClient().hSet(redisKey, {
+        [field]: walletBalance,
+      });
+
     }
 
     if (orderAmount > walletBalance) {
@@ -96,7 +99,7 @@ export const buyOrder = async (
     pipeline.expire(`orderdetail:orderID:${uuid}`, 50000); //set expiry of 5000 seconds
     pipeline.sAdd(`openOrders:userId:${userId}`, uuid);
     pipeline.expire(`openOrders:userId:${userId}`, 50000),
-    await pipeline.exec();
+      await pipeline.exec();
     //console.timeEnd("redis-pipeline");
 
     return res

@@ -15,36 +15,50 @@ export const bulkInsertion = async (messages: IOrder[]) => {
   try {
     await Order.insertMany(batch, { ordered: false });
     //instead of one by one operation i used bulk operation here
-    const walletOps = batch.map((order) => {
+    const walletOpss = [];
+
+    for (const order of batch) {
       if (order.orderSide === "BUY") {
-        return {
-          updateOne: {
-            filter: { user: order.user, asset: "USDT" },
-            update: { $inc: { balance: -order.orderAmount } },
-          },
-        };
+        const tokenWallet = await Redis.getClient().hGet(`wallet:${order.user}`, order.currencyPair.toUpperCase().replace("USDT", ""));
+        //create token wallet if not created yet
+        if (tokenWallet === "NaN") {
+          console.log("wallet created successfully")
+          walletOpss.push({
+            insertOne: {
+              document: { user: order.user, asset: order.currencyPair.toUpperCase().replace("usdt", ""), balance: 0 },
+              upsert: true
+            },
+          })
+        }
+        walletOpss.push(
+          {
+            updateOne: {
+              filter: { user: order.user, asset: "USDT" },
+              update: { $inc: { balance: -order.orderAmount } },
+              upsert: true
+            },
+          }
+        )
       } else {
-        return {
-          updateOne: {
-            filter: { user: order.user, asset: order.currencyPair },
-            update: { $inc: { balance: -order.orderQuantity } },
-          },
-        };
+        walletOpss.push(
+          {
+            updateOne: {
+              filter: { user: order.user, asset: order.currencyPair },
+              update: { $inc: { balance: -order.orderQuantity } },
+              upsert: true
+            },
+          }
+        )
       }
-    });
+    }
     //here walletops return an array of updateone operations
-    await Wallet.bulkWrite(walletOps, { ordered: false }); //why i ordered false because if one operation fails other should continue
+    await Wallet.bulkWrite(walletOpss, { ordered: false }); //why i ordered false because if one operation fails other should continue
 
     //after, i updated wallet balance i need to clear redis cache
     const multi = Redis.getClient().multi();
 
     for (const order of batch) {
-      if (order.orderSide === "BUY") {
-        multi.del(`wallet:${order.user}:USDT:balance`);
-        // multi.del(`orderdetail:orderID:${orderId}`)
-      } else {
-        multi.del(`wallet:${order.user}:${order.currencyPair}:balance`);
-      }
+      multi.del(`wallet:${order.user}`);
     }
     await multi.exec();
 
