@@ -26,7 +26,6 @@ export const bulkInsertion = async (messages: IOrder[]) => {
           walletOpss.push({
             insertOne: {
               document: { user: order.user, asset: order.currencyPair.toUpperCase().replace("USDT", ""), balance: 0 },
-              upsert: true
             },
           })
         }
@@ -35,7 +34,6 @@ export const bulkInsertion = async (messages: IOrder[]) => {
             updateOne: {
               filter: { user: order.user, asset: "USDT" },
               update: { $inc: { balance: -order.orderAmount } },
-              upsert: true
             },
           }
         )
@@ -43,9 +41,8 @@ export const bulkInsertion = async (messages: IOrder[]) => {
         walletOpss.push(
           {
             updateOne: {
-              filter: { user: order.user, asset: order.currencyPair },
+              filter: { user: order.user, asset: order.currencyPair.toUpperCase().replace("USDT", "") },
               update: { $inc: { balance: -order.orderQuantity } },
-              upsert: true
             },
           }
         )
@@ -67,6 +64,14 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     const tradeResults = await Promise.all(
       batch.map((order) => orderMatchingEngine(order)),
     );
+    console.log("redis del1")
+
+    for (const order of batch) {
+      multi.del(`openOrders:userId${order.user}`);
+      multi.del(`orderdetail:orderID:${order.orderId}`);
+      console.log("redis del2")
+    }
+    await multi.exec();
 
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
@@ -104,9 +109,8 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     for (const trade of allTrades) {
       tradeWalletOps.push({
         updateOne: {
-          filter: { user: trade.buyerUserId, asset: trade.currencyPair.toUpperCase().replace("USDT","") },
+          filter: { user: trade.buyerUserId, asset: trade.currencyPair.toUpperCase().replace("USDT", "") },
           update: { $inc: { balance: trade.tradedQuantity } },
-          upsert: true,
         },
       });
       tradeWalletOps.push({
@@ -115,7 +119,6 @@ export const bulkInsertion = async (messages: IOrder[]) => {
           update: {
             $inc: { balance: trade.tradedQuantity * trade.executionPrice },
           },
-          upsert: true,
         },
       });
     }

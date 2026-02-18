@@ -45,7 +45,7 @@ export const sellOrder = async (
       // console.time("db-fetch");
       const walletDB = await Wallet.findOne({
         user: userId,
-        asset: currencyPair,
+        asset: currencyPair.toUpperCase().replace("USDT",""),
       }).lean();
       // console.timeEnd("db-fetch");
       if (!walletDB) {
