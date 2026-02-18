@@ -66,19 +66,25 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     );
     console.log("redis del1")
 
-    for (const order of batch) {
-      multi.del(`openOrders:userId${order.user}`);
-      multi.del(`orderdetail:orderID:${order.orderId}`);
-      console.log("redis del2")
-    }
-    await multi.exec();
 
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
+
     if (allTrades.length === 0) {
       processing = false;
       return;
     }
+
+    const ordermulti = Redis.getClient().multi();
+    for (const order of allTrades) {
+      console.log(order)
+      ordermulti.del(`openOrders:userId:${order.buyerUserId}`);
+      ordermulti.del(`openOrders:userId:${order.sellerUserId}`);
+      ordermulti.del(`orderdetail:orderID:${order.buyerOrderId}`);
+      ordermulti.del(`orderdetail:orderID:${order.sellerOrderId}`);
+      console.log("redis del2")
+    }
+    await ordermulti.exec();
     //push alltrades to orderHistory collection
     await orderHistory.insertMany(allTrades);
 

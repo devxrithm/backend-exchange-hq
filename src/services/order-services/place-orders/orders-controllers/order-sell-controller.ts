@@ -37,7 +37,7 @@ export const sellOrder = async (
     const totalAmount = orderQuantity * entryPrice;
 
     const redisKey = `wallet:${userId}`;
-    const wallet = await Redis.getClient().hGet(redisKey,currencyPair.toUpperCase().replace("USDT",""));
+    const wallet = await Redis.getClient().hGet(redisKey, currencyPair.toUpperCase().replace("USDT", ""));
 
     let walletBalance = Number(wallet);
     if (walletBalance === 0) {
@@ -45,7 +45,7 @@ export const sellOrder = async (
       // console.time("db-fetch");
       const walletDB = await Wallet.findOne({
         user: userId,
-        asset: currencyPair.toUpperCase().replace("USDT",""),
+        asset: currencyPair.toUpperCase().replace("USDT", ""),
       }).lean();
       // console.timeEnd("db-fetch");
       if (!walletDB) {
@@ -54,11 +54,11 @@ export const sellOrder = async (
       //push to redis
       walletBalance = Number(walletDB.balance);
       //push cached wallet to redis
-      const field = currencyPair.toUpperCase().replace("USDT","");
+      const field = currencyPair.toUpperCase().replace("USDT", "");
       await Redis.getClient().hSet(redisKey, {
         [field]: walletBalance,
       });
-      
+
     }
 
     if (orderQuantity > walletBalance) {
@@ -89,15 +89,15 @@ export const sellOrder = async (
     //push to redis
     const pipeline = Redis.getClient().multi();
     pipeline.hSet(`orderdetail:orderID:${uuid}`, sellOrder);
-    pipeline.expire(`orderdetail:orderID:${uuid}`, 5000); 
-    pipeline.sAdd(`openOrders:userId${userId}`, uuid);
+    pipeline.expire(`orderdetail:orderID:${uuid}`, 5000);
+    pipeline.sAdd(`openOrders:userId:${userId}`, uuid);
     await pipeline.exec();
 
     return res
       .status(HttpCodes.OK)
       .json(new ApiResponse(HttpCodes.OK, sellOrder, "Sell order executed"));
   } catch (error) {
-   
+
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)
