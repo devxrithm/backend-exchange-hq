@@ -64,12 +64,10 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     const tradeResults = await Promise.all(
       batch.map((order) => orderMatchingEngine(order)),
     );
-    console.log("redis del1")
-
 
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
-
+    console.log(allTrades)
     if (allTrades.length === 0) {
       processing = false;
       return;
@@ -92,20 +90,33 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     const orderStatusOps = [];
 
     for (const trade of allTrades) {
+      const buyerOrder = await Order.findOne({ orderId: trade.buyerOrderId });
+      const sellerOrder = await Order.findOne({ orderId: trade.sellerOrderId });
+
+      const buyerRemainingQty = (buyerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
+      const sellerRemainingQty = (sellerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
+
       orderStatusOps.push(
         {
           updateOne: {
             filter: { orderId: trade.buyerOrderId },
-            update: { positionStatus: "Closed" },
+            update: {
+              positionStatus: buyerRemainingQty <= 0 ? "Closed" : "Open",
+              orderQuantity: buyerRemainingQty > 0 ? buyerRemainingQty : 0,
+            },
           },
         },
         {
           updateOne: {
             filter: { orderId: trade.sellerOrderId },
-            update: { positionStatus: "Closed" },
+            update: {
+              positionStatus: sellerRemainingQty <= 0 ? "Closed" : "Open",
+              orderQuantity: sellerRemainingQty > 0 ? sellerRemainingQty : 0,
+            },
           },
-        },
+        }
       );
+
     }
 
     await Order.bulkWrite(orderStatusOps, { ordered: false });
