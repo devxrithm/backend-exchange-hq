@@ -6,7 +6,7 @@ import { buyOrderBook, sellOrderBook,  } from "./order-book-controller";
 const orderBookRoutes: Router = Router();
 
 orderBookRoutes.get("/buy-order-book/:currencyPair", verifyJWT, buyOrderBook);
-orderBookRoutes.get("/buy-order-book/:currencyPair", verifyJWT, sellOrderBook);
+orderBookRoutes.get("/sell-order-book/:currencyPair", verifyJWT, sellOrderBook);
 
 
 
