@@ -3,6 +3,7 @@ import { orderHistory } from "../order-services/order-history/order-history-mode
 import { IOrder, Order } from "../order-services/place-orders/order-model";
 import { orderMatchingEngine } from "../../matching-engine-algorithm/orders-matching-engine";
 import { Wallet } from "../wallet-services/wallet-model";
+// import { wss } from "../../app";
 
 let processing = false;
 
@@ -13,6 +14,22 @@ export const bulkInsertion = async (messages: IOrder[]) => {
   //Start at index 0 and Remove 1000 elements and finally Return those 1000 elements
 
   try {
+    //websocket connection
+    // wss.on("connection", function connection(ws, req) {
+    //   console.log("WebSocket connection established from:", req.socket.remoteAddress);
+
+    //   ws.on("error", console.error); // 👈 handle errors first
+
+    //   ws.on("message", function message(data) {
+    //     console.log("received:", data.toString()); // 👈 good to log what you receive
+    //     ws.send("Order Placed successfully");
+    //   });
+      
+    //   ws.on("close", function () {
+    //     console.log("WebSocket connection closed");
+    //   });
+    // });
+
     await Order.insertMany(batch, { ordered: false });
     //instead of one by one operation i used bulk operation here
     const walletOpss = [];
