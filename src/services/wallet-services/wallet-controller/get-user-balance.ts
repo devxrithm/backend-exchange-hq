@@ -16,7 +16,7 @@ export const getUserBalance = async (req: AuthRequest, res: Response) => {
     }
 
     const { asset1, asset2 } = req.query;
-
+    // console.log(req.query)
     if (!asset1 || !asset2) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "asset1 and asset2 are required");
     }
