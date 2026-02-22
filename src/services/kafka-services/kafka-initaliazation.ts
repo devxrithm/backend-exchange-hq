@@ -3,6 +3,7 @@ import { bulkInsertion } from "./bulk-insertion";
 
 import kafkaConsumer from "../../config/kafka-config/kafka-consumer";
 import { Kafka } from "../../config/kafka-config/kafka-producer";
+import { emitToClients } from "../../app";
 
 const messages: IOrder[] = [];
 
@@ -22,14 +23,14 @@ const kafkaConsume = async () => {
     await kafkaConsumer.subscribeToTopic("orders-detail");
 
     // Set up interval once, not per message
-    setInterval(() => bulkInsertion(messages), 5000);
+    setInterval(() => bulkInsertion(messages, emitToClients), 5000);
 
     await kafkaConsumer.consume(async (message) => {
       // Add message to the batch
       messages.push(message);
       // Immediate bulk insertion if threshold reached
       if (messages.length >= 1000) {
-        await bulkInsertion(messages);
+        await bulkInsertion(messages, emitToClients);
         messages.length = 0;
       }
     });

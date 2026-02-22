@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //websocket connecttion...........
 app.locals.emit = wss.emit; // Keep `this` bound so emit can access wss.clients
-
+export const emitToClients = wss.emit;
 //routes.............
 app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);

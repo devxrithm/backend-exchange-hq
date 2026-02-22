@@ -6,7 +6,10 @@ import { Wallet } from "../wallet-services/wallet-model";
 
 let processing = false;
 
-export const bulkInsertion = async (messages: IOrder[]) => {
+export const bulkInsertion = async (
+  messages: IOrder[],
+  emit: (message: string) => void,
+) => {
   if (processing || messages.length === 0) return;
   processing = true;
   const batch = messages.splice(0, 1000);
@@ -78,7 +81,7 @@ export const bulkInsertion = async (messages: IOrder[]) => {
       processing = false;
       return;
     }
-
+    emit("Order Executed Successfully");
     const ordermulti = Redis.getClient().multi();
     for (const order of allTrades) {
       console.log(order);
