@@ -10,15 +10,16 @@ import { redisInit } from "./config/redis-config/redis-initialisatio";
 import { orderHistoryRoutes } from "./services/order-services/order-history/order-history-routes";
 import { config } from "./config/env-config/config";
 import { orderBookRoutes } from "./services/order-services/orderbook/order-book-route";
-import { WebSocketServer } from 'ws';
 import { createServer } from "http";
+import { WebSocketServerInitializer } from "./websockets/websocket-initializer";
 
 dotenv.config({
   path: "./.env",
 });
+
 const app = express();
 const httpServer = createServer(app);
-export const wss = new WebSocketServer({ server: httpServer });
+const wss = new WebSocketServerInitializer(httpServer);
 
 initKafkaService();
 redisInit();
@@ -34,20 +35,7 @@ app.use(cookieParser()); //for managing cookies
 app.use(express.urlencoded({ extended: true }));
 
 //websocket connecttion...........
-wss.on("connection", function connection(ws, req) {
-  console.log("WebSocket connection established from:", req.socket.remoteAddress);
-
-  ws.on("error", console.error);
-
-  ws.on("message", function message(data) {
-    console.log("received: %s", data);
-    ws.send("something");
-  });
-
-  ws.on("close", function () {
-    console.log("WebSocket connection closed");
-  });
-});
+app.locals.emit = wss.emit; // Keep `this` bound so emit can access wss.clients
 
 //routes.............
 app.use("/api/auth", authRoutes);

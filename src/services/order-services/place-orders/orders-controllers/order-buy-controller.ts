@@ -61,7 +61,6 @@ export const buyOrder = async (
       await Redis.getClient().hSet(redisKey, {
         [field]: walletBalance,
       });
-
     }
 
     if (orderAmount > walletBalance) {
@@ -98,9 +97,10 @@ export const buyOrder = async (
     pipeline.hSet(`orderdetail:orderID:${uuid}`, buyOrder);
     pipeline.expire(`orderdetail:orderID:${uuid}`, 50000); //set expiry of 5000 seconds
     pipeline.sAdd(`openOrders:userId:${userId}`, uuid);
-    pipeline.expire(`openOrders:userId:${userId}`, 50000),
-      await pipeline.exec();
+    pipeline.expire(`openOrders:userId:${userId}`, 50000);
+    await pipeline.exec();
     //console.timeEnd("redis-pipeline");
+    req.app.locals.emit("Order Placed Successfully");
 
     return res
       .status(HttpCodes.OK)
@@ -108,6 +108,7 @@ export const buyOrder = async (
         new ApiResponse(HttpCodes.OK, buyOrder, "Trade placed successfully"),
       );
   } catch (error) {
+    console.log(error);
     if (error instanceof ApiErrorHandling) {
       return res
         .status(error.statusCode)

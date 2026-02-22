@@ -27,7 +27,6 @@ const kafkaConsume = async () => {
     await kafkaConsumer.consume(async (message) => {
       // Add message to the batch
       messages.push(message);
-
       // Immediate bulk insertion if threshold reached
       if (messages.length >= 1000) {
         await bulkInsertion(messages);

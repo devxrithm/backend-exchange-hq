@@ -3,7 +3,6 @@ import { orderHistory } from "../order-services/order-history/order-history-mode
 import { IOrder, Order } from "../order-services/place-orders/order-model";
 import { orderMatchingEngine } from "../../matching-engine-algorithm/orders-matching-engine";
 import { Wallet } from "../wallet-services/wallet-model";
-// import { wss } from "../../app";
 
 let processing = false;
 
@@ -14,55 +13,45 @@ export const bulkInsertion = async (messages: IOrder[]) => {
   //Start at index 0 and Remove 1000 elements and finally Return those 1000 elements
 
   try {
-    //websocket connection
-    // wss.on("connection", function connection(ws, req) {
-    //   console.log("WebSocket connection established from:", req.socket.remoteAddress);
-
-    //   ws.on("error", console.error); // 👈 handle errors first
-
-    //   ws.on("message", function message(data) {
-    //     console.log("received:", data.toString()); // 👈 good to log what you receive
-    //     ws.send("Order Placed successfully");
-    //   });
-      
-    //   ws.on("close", function () {
-    //     console.log("WebSocket connection closed");
-    //   });
-    // });
-
     await Order.insertMany(batch, { ordered: false });
     //instead of one by one operation i used bulk operation here
     const walletOpss = [];
 
     for (const order of batch) {
       if (order.orderSide === "BUY") {
-        const tokenWallet = await Redis.getClient().hGet(`wallet:${order.user}`, order.currencyPair.toUpperCase().replace("USDT", ""));
+        const tokenWallet = await Redis.getClient().hGet(
+          `wallet:${order.user}`,
+          order.currencyPair.toUpperCase().replace("USDT", ""),
+        );
         //create token wallet if not created yet
         if (tokenWallet === "NaN") {
-          console.log("wallet created successfully")
+          console.log("wallet created successfully");
           walletOpss.push({
             insertOne: {
-              document: { user: order.user, asset: order.currencyPair.toUpperCase().replace("USDT", ""), balance: 0 },
+              document: {
+                user: order.user,
+                asset: order.currencyPair.toUpperCase().replace("USDT", ""),
+                balance: 0,
+              },
             },
-          })
+          });
         }
-        walletOpss.push(
-          {
-            updateOne: {
-              filter: { user: order.user, asset: "USDT" },
-              update: { $inc: { balance: -order.orderAmount } },
-            },
-          }
-        )
+        walletOpss.push({
+          updateOne: {
+            filter: { user: order.user, asset: "USDT" },
+            update: { $inc: { balance: -order.orderAmount } },
+          },
+        });
       } else {
-        walletOpss.push(
-          {
-            updateOne: {
-              filter: { user: order.user, asset: order.currencyPair.toUpperCase().replace("USDT", "") },
-              update: { $inc: { balance: -order.orderQuantity } },
+        walletOpss.push({
+          updateOne: {
+            filter: {
+              user: order.user,
+              asset: order.currencyPair.toUpperCase().replace("USDT", ""),
             },
-          }
-        )
+            update: { $inc: { balance: -order.orderQuantity } },
+          },
+        });
       }
     }
     //here walletops return an array of updateone operations
@@ -84,7 +73,7 @@ export const bulkInsertion = async (messages: IOrder[]) => {
 
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
     const allTrades = tradeResults.flat();
-    console.log(allTrades)
+    console.log(allTrades);
     if (allTrades.length === 0) {
       processing = false;
       return;
@@ -92,12 +81,12 @@ export const bulkInsertion = async (messages: IOrder[]) => {
 
     const ordermulti = Redis.getClient().multi();
     for (const order of allTrades) {
-      console.log(order)
+      console.log(order);
       ordermulti.del(`openOrders:userId:${order.buyerUserId}`);
       ordermulti.del(`openOrders:userId:${order.sellerUserId}`);
       ordermulti.del(`orderdetail:orderID:${order.buyerOrderId}`);
       ordermulti.del(`orderdetail:orderID:${order.sellerOrderId}`);
-      console.log("redis del2")
+      console.log("redis del2");
     }
     await ordermulti.exec();
     //push alltrades to orderHistory collection
@@ -110,8 +99,10 @@ export const bulkInsertion = async (messages: IOrder[]) => {
       const buyerOrder = await Order.findOne({ orderId: trade.buyerOrderId });
       const sellerOrder = await Order.findOne({ orderId: trade.sellerOrderId });
 
-      const buyerRemainingQty = (buyerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
-      const sellerRemainingQty = (sellerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
+      const buyerRemainingQty =
+        (buyerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
+      const sellerRemainingQty =
+        (sellerOrder?.orderQuantity ?? 0) - trade.tradedQuantity;
 
       orderStatusOps.push(
         {
@@ -131,9 +122,8 @@ export const bulkInsertion = async (messages: IOrder[]) => {
               orderQuantity: sellerRemainingQty > 0 ? sellerRemainingQty : 0,
             },
           },
-        }
+        },
       );
-
     }
 
     await Order.bulkWrite(orderStatusOps, { ordered: false });
@@ -143,7 +133,10 @@ export const bulkInsertion = async (messages: IOrder[]) => {
     for (const trade of allTrades) {
       tradeWalletOps.push({
         updateOne: {
-          filter: { user: trade.buyerUserId, asset: trade.currencyPair.toUpperCase().replace("USDT", "") },
+          filter: {
+            user: trade.buyerUserId,
+            asset: trade.currencyPair.toUpperCase().replace("USDT", ""),
+          },
           update: { $inc: { balance: trade.tradedQuantity } },
         },
       });
