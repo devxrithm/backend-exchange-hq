@@ -31,7 +31,6 @@ const kafkaConsume = async () => {
       // Immediate bulk insertion if threshold reached
       if (messages.length >= 1000) {
         await bulkInsertion(messages, emitToClients);
-        messages.length = 0;
       }
     });
   } catch (error) {

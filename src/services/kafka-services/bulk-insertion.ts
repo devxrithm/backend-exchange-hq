@@ -16,6 +16,7 @@ export const bulkInsertion = async (
   //Start at index 0 and Remove 1000 elements and finally Return those 1000 elements
 
   try {
+    //insert placed orders into order collection
     await Order.insertMany(batch, { ordered: false });
     //instead of one by one operation i used bulk operation here
     const walletOpss = [];
@@ -57,6 +58,7 @@ export const bulkInsertion = async (
         });
       }
     }
+
     //here walletops return an array of updateone operations
     await Wallet.bulkWrite(walletOpss, { ordered: false }); //why i ordered false because if one operation fails other should continue
 
@@ -68,28 +70,29 @@ export const bulkInsertion = async (
     }
     await multi.exec();
 
+    emit("Wallet Update Successfully");
     //here we execute the engine in parallel
     // matching engine start here
     const tradeResults = await Promise.all(
       batch.map((order) => orderMatchingEngine(order)),
     );
-
+    
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
+
     const allTrades = tradeResults.flat();
-    console.log(allTrades);
+
     if (allTrades.length === 0) {
       processing = false;
       return;
     }
     emit("Order Executed Successfully");
+
     const ordermulti = Redis.getClient().multi();
     for (const order of allTrades) {
-      console.log(order);
       ordermulti.del(`openOrders:userId:${order.buyerUserId}`);
       ordermulti.del(`openOrders:userId:${order.sellerUserId}`);
       ordermulti.del(`orderdetail:orderID:${order.buyerOrderId}`);
       ordermulti.del(`orderdetail:orderID:${order.sellerOrderId}`);
-      console.log("redis del2");
     }
     await ordermulti.exec();
     //push alltrades to orderHistory collection
