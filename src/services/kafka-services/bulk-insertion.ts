@@ -8,7 +8,7 @@ let processing = false;
 
 export const bulkInsertion = async (
   messages: IOrder[],
-  emit: (message: string) => void,
+  emit: (event: string, message: string) => void,
 ) => {
   if (processing || messages.length === 0) return;
   processing = true;
@@ -70,13 +70,13 @@ export const bulkInsertion = async (
     }
     await multi.exec();
 
-    emit("Wallet Update Successfully");
+    emit("wallet", "Wallet Update Successfully");
     //here we execute the engine in parallel
     // matching engine start here
     const tradeResults = await Promise.all(
       batch.map((order) => orderMatchingEngine(order)),
     );
-    
+
     //here tradeResults is an array of arrays [[trade1, trade2], [trade3], n number of trades] so to convert it into a single array we use flat method here
 
     const allTrades = tradeResults.flat();
@@ -85,7 +85,7 @@ export const bulkInsertion = async (
       processing = false;
       return;
     }
-    emit("Order Executed Successfully");
+    emit("order", "Order Executed Successfully");
 
     const ordermulti = Redis.getClient().multi();
     for (const order of allTrades) {

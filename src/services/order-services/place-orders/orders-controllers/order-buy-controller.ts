@@ -100,7 +100,7 @@ export const buyOrder = async (
     pipeline.expire(`openOrders:userId:${userId}`, 50000);
     await pipeline.exec();
     //console.timeEnd("redis-pipeline");
-    req.app.locals.emit("Order Placed Successfully");
+    req.app.locals.emit("order", "Order Placed Successfully");
 
     return res
       .status(HttpCodes.OK)
