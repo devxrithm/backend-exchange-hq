@@ -136,19 +136,19 @@ const userLogin = async (
     return res
       .status(200)
       .cookie("accessToken", accessToken, {
-        // httpOnly: true,
-        // secure: true, // required for HTTPS
-        // sameSite: "none", // allow cross-site
+        httpOnly: true,
+        secure: true, // required for HTTPS
+        sameSite: "none", // allow cross-site
         path: "/",
-        // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+        expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
         maxAge: 84600 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
-        // httpOnly: true,
-        // secure: true, // required for HTTPS
-        // sameSite: "none", // allow cross-site
-        // path: "/",
-        // expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+        httpOnly: true,
+        secure: true, // required for HTTPS
+        sameSite: "none", // allow cross-site
+        path: "/",
+        expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
         maxAge: 84600 * 1000,
       })
       .json(
