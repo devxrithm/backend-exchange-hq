@@ -8,6 +8,7 @@ import {
   ApiResponse,
   Kafka,
   Wallet,
+  getLatestPrice
 } from "./export";
 import { v4 as uuidv4 } from "uuid";
 
@@ -21,7 +22,6 @@ export const buyOrder = async (
       currencyPair,
       orderSide,
       orderType,
-      entryPrice,
       positionStatus,
       orderAmount,
     }: IBuyRequestBody = req.body;
@@ -35,8 +35,18 @@ export const buyOrder = async (
         "User not authenticated",
       );
     }
+
+    const livePrice = await getLatestPrice(currencyPair.toUpperCase());
+
+    if (!livePrice) {
+      throw new ApiErrorHandling(
+        HttpCodes.SERVICE_UNAVAILABLE,
+        "Live mark price unavailable. Please retry in a moment",
+      );
+    }
+
     //calculate qty so that it can use as globally
-    const orderQuantity = orderAmount / entryPrice;
+    const orderQuantity = orderAmount / livePrice;
 
     const redisKey = `wallet:${userId}`;
 
@@ -50,6 +60,7 @@ export const buyOrder = async (
         user: userId,
         asset: "USDT",
       }).lean();
+
       if (!walletDB) {
         throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "wallet not created");
       }
@@ -75,7 +86,7 @@ export const buyOrder = async (
       orderSide,
       currencyPair: currencyPair,
       orderType,
-      entryPrice: entryPrice.toString(),
+      entryPrice: livePrice.toString(),
       positionStatus,
       orderAmount: orderAmount.toString(),
       orderQuantity: orderQuantity.toString(),

@@ -13,11 +13,12 @@ export {
   HttpCodes,
 } from "../../../../utils/utils-export";
 export { AuthRequest } from "../../../../middleware/jwt-verify";
+export { getLatestPrice } from "../../../../websockets/price-fetch";
 
 export interface IBuyRequestBody {
   currencyPair: string;
   orderType: "market";
-  entryPrice: number;
+  entryPrice?: number;
   positionStatus: "open" | "closed";
   orderAmount: number;
   orderSide: "BUY" | "SELL"; // USDT

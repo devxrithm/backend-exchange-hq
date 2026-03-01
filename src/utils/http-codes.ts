@@ -8,6 +8,7 @@ interface ICodes {
   CONFLICT: number;
   UNPROCESSABLE_CONTENT: number;
   TOO_MANY_REQUESTS: number;
+  SERVICE_UNAVAILABLE: number;
   INTERNAL_SERVER_ERROR: number;
 }
 
@@ -21,5 +22,6 @@ export const HttpCodes: ICodes = {
   CONFLICT: 409,
   UNPROCESSABLE_CONTENT: 422,
   TOO_MANY_REQUESTS: 429,
+  SERVICE_UNAVAILABLE: 503,
   INTERNAL_SERVER_ERROR: 500,
 };

@@ -8,6 +8,7 @@ import {
   Response,
   Kafka,
   Redis,
+  getLatestPrice,
 } from "./export";
 import { v4 as uuidv4 } from "uuid";
 
@@ -21,7 +22,6 @@ export const sellOrder = async (
       currencyPair,
       orderType,
       orderSide,
-      entryPrice,
       positionStatus,
       orderQuantity,
     }: ISellRequestBody = req.body;
@@ -34,7 +34,16 @@ export const sellOrder = async (
         "User not authenticated",
       );
     }
-    const totalAmount = orderQuantity * entryPrice;
+    const livePrice = await getLatestPrice(currencyPair.toUpperCase());
+
+    if (!livePrice) {
+      throw new ApiErrorHandling(
+        HttpCodes.SERVICE_UNAVAILABLE,
+        "Live mark price unavailable. Please retry in a moment",
+      );
+    }
+
+    const totalAmount = orderQuantity * livePrice;
 
     const redisKey = `wallet:${userId}`;
     const wallet = await Redis.getClient().hGet(
@@ -75,7 +84,7 @@ export const sellOrder = async (
       orderSide,
       currencyPair: currencyPair,
       orderType,
-      entryPrice: entryPrice.toString(),
+      entryPrice: livePrice.toString(),
       positionStatus,
       orderAmount: totalAmount.toString(),
       orderQuantity: orderQuantity.toString(),
