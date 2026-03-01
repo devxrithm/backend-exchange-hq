@@ -5,8 +5,14 @@ import {
   HttpCodes,
   jwtVerifyRefreshToken,
   getAccessAndRefreshToken,
+  jwtVerifyAccessToken,
 } from "../../utils/utils-export";
-import { Request, Response, CookieOptions } from "express";
+import {
+  Request,
+  Response,
+  CookieOptions,
+  RequestHandler
+} from "express";
 import { AuthRequest } from "../../middleware/jwt-verify";
 
 const userSignup = async (
@@ -292,4 +298,54 @@ const genrateNewAccessAndRefreshToken = async (req: Request, res: Response) => {
   }
 };
 
-export { userLogin, userSignup, userLogout, genrateNewAccessAndRefreshToken };
+const verifyJWTToken: RequestHandler = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const token: string = req.cookies?.accessToken;
+    if (!token) {
+      throw new ApiErrorHandling(400, "token invalid");
+    }
+    const decodedToken = jwtVerifyAccessToken(token);
+
+    if (!decodedToken) {
+      throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");
+    }
+
+    const user = await Auth.findById(decodedToken.UserPayLoad._id).select(
+      "-password -refreshToken",
+    );
+
+    if (!user) {
+      throw new ApiErrorHandling(401, "Invalid Access Token");
+    }
+
+    res
+      .status(HttpCodes.OK)
+      .json(new ApiResponse(HttpCodes.OK, user, "User verified successfully"));
+  } catch (error) {
+    if (error instanceof ApiErrorHandling) {
+      res
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
+    }
+    res
+      .status(HttpCodes.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpCodes.INTERNAL_SERVER_ERROR,
+          null,
+          "Internal Server Error",
+        ),
+      );
+  }
+};
+
+export {
+  userLogin,
+  userSignup,
+  userLogout,
+  genrateNewAccessAndRefreshToken,
+  verifyJWTToken,
+};

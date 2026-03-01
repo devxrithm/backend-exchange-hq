@@ -6,7 +6,7 @@ import {
   jwtVerifyAccessToken,
   ApiErrorHandling,
 } from "../utils/utils-export";
-console.log("ukcode")
+
 export interface AuthRequest extends Request {
   user?: {
     _id: string;
@@ -18,7 +18,7 @@ export interface AuthRequest extends Request {
 const verifyJWT: RequestHandler = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const token: string = req.cookies?.accessToken;
@@ -30,15 +30,16 @@ const verifyJWT: RequestHandler = async (
     if (!decodedToken) {
       throw new ApiErrorHandling(HttpCodes.BAD_REQUEST, "Invalid Token");
     }
-   
+
     const user = await Auth.findById(decodedToken.UserPayLoad._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
-    
+
     if (!user) {
       throw new ApiErrorHandling(401, "Invalid Access Token");
     }
     req.user = Object(user);
+
     next();
   } catch (error) {
     if (error instanceof ApiErrorHandling) {
@@ -52,8 +53,8 @@ const verifyJWT: RequestHandler = async (
         new ApiResponse(
           HttpCodes.INTERNAL_SERVER_ERROR,
           null,
-          "Internal Server Error"
-        )
+          "Internal Server Error",
+        ),
       );
   }
 };
