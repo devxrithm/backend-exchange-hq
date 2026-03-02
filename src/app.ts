@@ -44,4 +44,9 @@ app.use("/api/order", orderRoutes);
 app.use("/api/order-history", orderHistoryRoutes);
 app.use("/api/order-book", orderBookRoutes);
 
+app.get("/", (_req, res) => {
+  res.send(
+    "Welcome to the Crypto Trading Platform API | Designed and Developed by Ujjwal Katiyar",
+  );
+});
 export { app, httpServer };
