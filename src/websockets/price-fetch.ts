@@ -1,13 +1,24 @@
+import axios from "axios";
+
 interface BinancePriceResponse {
   symbol: string;
   price: string;
 }
 
 export async function getLatestPrice(symbol: string): Promise<number> {
-  const response = await fetch(
-    `https://api2.binance.com/api/v3/ticker/price?symbol=${symbol.toUpperCase()}`,
-  );
-  const data = (await response.json()) as BinancePriceResponse;
-  console.log(parseFloat(data.price))
-  return parseFloat(data.price);
+  try {
+    const { data } = await axios.get<BinancePriceResponse>(
+      "https://api.binance.com/api/v3/ticker/price",
+      {
+        params: {
+          symbol: symbol.toUpperCase(),
+        },
+      },
+    );
+
+    console.log(parseFloat(data.price));
+    return parseFloat(data.price);
+  } catch (error) {
+    throw new Error(`Failed to fetch latest price: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

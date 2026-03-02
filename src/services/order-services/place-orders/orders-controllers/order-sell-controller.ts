@@ -34,7 +34,7 @@ export const sellOrder = async (
         "User not authenticated",
       );
     }
-    const livePrice = await getLatestPrice(currencyPair.toUpperCase());
+    const livePrice = await getLatestPrice(currencyPair);
 
     if (!livePrice) {
       throw new ApiErrorHandling(
