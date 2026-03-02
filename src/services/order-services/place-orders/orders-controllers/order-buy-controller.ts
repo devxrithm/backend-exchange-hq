@@ -36,7 +36,7 @@ export const buyOrder = async (
       );
     }
 
-    const livePrice = await getLatestPrice(currencyPair.toUpperCase());
+    const livePrice = await getLatestPrice(currencyPair);
 
     if (!livePrice) {
       throw new ApiErrorHandling(
